@@ -41,6 +41,7 @@ dofile(menupath .. DIR_DELIM .. "dlg_config_world.lua")
 dofile(menupath .. DIR_DELIM .. "tab_credits.lua")
 dofile(menupath .. DIR_DELIM .. "tab_mods.lua")
 dofile(menupath .. DIR_DELIM .. "tab_settings.lua")
+dofile(menupath .. DIR_DELIM .. "tab_simple_settings.lua")
 if PLATFORM ~= "Android" then
 	dofile(menupath .. DIR_DELIM .. "dlg_create_world.lua")
 	dofile(menupath .. DIR_DELIM .. "dlg_delete_mod.lua")
@@ -131,6 +132,7 @@ local function init_globals()
 	else
 		tv_main:add(tab_simple_main)
 	end
+	tv_main:add(tab_simple_settings)
 	tv_main:add(tab_settings)
 	if PLATFORM ~= "Android" then
 		tv_main:add(tab_texturepacks)
