@@ -1778,7 +1778,6 @@ void Map::transformLiquids(std::map<v3s16, MapBlock*> & modified_blocks)
 		if (range > LIQUID_LEVEL_MAX+1)
 			range = LIQUID_LEVEL_MAX+1;
 		if (ignore_detected) {
-			transforming_liquid_add(p0);
 			continue;
 		}
 
@@ -3446,6 +3445,7 @@ MapBlock* ServerMap::loadBlock(v3s16 blockpos)
 	ret = dbase->loadBlock(blockpos);
 	if (ret != "") {
 		loadBlock(&ret, blockpos, createSector(p2d), false);
+		transforming_liquid_add(blockpos);
 		return getBlockNoCreateNoEx(blockpos);
 	}
 	// Not found in database, try the files
