@@ -58,6 +58,8 @@ public:
 
 	bool OnEvent(const SEvent& event);
 
+	void reset_keys();
+
 private:
 
 	void init_keys();

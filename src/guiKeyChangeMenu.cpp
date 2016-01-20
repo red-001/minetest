@@ -39,7 +39,7 @@ extern MainGameCallback *g_gamecallback;
 
 enum
 {
-	GUI_ID_BACK_BUTTON = 101, GUI_ID_ABORT_BUTTON, GUI_ID_SCROLL_BAR,
+	GUI_ID_BACK_BUTTON = 101, GUI_ID_ABORT_BUTTON, GUI_ID_SCROLL_BAR, GUI_ID_RESET_KEYS_BUTTON,
 	// buttons
 	GUI_ID_KEY_FORWARD_BUTTON,
 	GUI_ID_KEY_BACKWARD_BUTTON,
@@ -201,6 +201,14 @@ void GUIKeyChangeMenu::regenerateGui(v2u32 screensize)
 				text);
 		delete[] text;
 	}	
+	{
+		core::rect < s32 > rect(0, 0, 100, 30);
+		rect += topleft + v2s32(size.X - 100 - 20 - 100 - 20 -100 -20, size.Y - 40);
+		const wchar_t *text = wgettext("Reset");
+		Environment->addButton(rect, this, GUI_ID_RESET_KEYS_BUTTON,
+			text);
+		delete[] text;
+	}
 }
 
 void GUIKeyChangeMenu::drawMenu()
@@ -348,6 +356,12 @@ bool GUIKeyChangeMenu::OnEvent(const SEvent& event)
 		{
 			switch (event.GUIEvent.Caller->getID())
 			{
+				case GUI_ID_RESET_KEYS_BUTTON: //Reset keybindings to default
+					key_settings.clear();
+					reset_keys();
+					init_keys();
+					regenerateGui(Environment->getVideoDriver()->getScreenSize());
+					return true;
 				case GUI_ID_BACK_BUTTON: //back
 					acceptInput();
 					quitMenu();
@@ -416,3 +430,24 @@ void GUIKeyChangeMenu::init_keys()
 	this->add_key(GUI_ID_KEY_DUMP_BUTTON,      wgettext("Print stacks"),     "keymap_print_debug_stacks");
 }
 
+void GUIKeyChangeMenu::reset_keys()
+{
+	g_settings->remove("keymap_forward");
+	g_settings->remove("keymap_backward");
+	g_settings->remove("keymap_left");
+	g_settings->remove("keymap_right");
+	g_settings->remove("keymap_special1");
+	g_settings->remove("keymap_jump");
+	g_settings->remove("keymap_sneak");
+	g_settings->remove("keymap_drop");
+	g_settings->remove("keymap_inventory");
+	g_settings->remove("keymap_chat");
+	g_settings->remove("keymap_cmd");
+	g_settings->remove("keymap_console");
+	g_settings->remove("keymap_freemove");
+	g_settings->remove("keymap_fastmove");
+	g_settings->remove("keymap_cinematic");
+	g_settings->remove("keymap_noclip");
+	g_settings->remove("keymap_rangeselect");
+	g_settings->remove("keymap_print_debug_stacks");
+}
