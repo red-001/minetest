@@ -1752,6 +1752,9 @@ void Map::transformLiquids(std::map<v3s16, MapBlock*> & modified_blocks)
 						// Do not count bottom source, it will screw things up
 						if(dirs[i].Y != -1)
 							sources[num_sources++] = nb;
+						if (nb.t == NEIGHBOR_LOWER){
+							flowing_down = true;
+						}
 					}
 					break;
 				case LIQUID_FLOWING:
