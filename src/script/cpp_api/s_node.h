@@ -50,6 +50,7 @@ public:
 			ServerActiveObject *sender);
 	void node_falling_update(v3s16 p);
 	void node_falling_update_single(v3s16 p);
+	void node_on_flood(v3s16 p, MapNode node);
 public:
 	static struct EnumString es_DrawType[];
 	static struct EnumString es_ContentParamType[];

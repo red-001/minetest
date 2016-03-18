@@ -1887,6 +1887,8 @@ void Map::transformLiquids(std::map<v3s16, MapBlock*> & modified_blocks)
 			setNode(p0, n0);
 		}
 
+		if (cf.floodable);
+			// TODO:node_on_flood should be called here
 		v3s16 blockpos = getNodeBlockPos(p0);
 		MapBlock *block = getBlockNoCreateNoEx(blockpos);
 		if (block != NULL) {

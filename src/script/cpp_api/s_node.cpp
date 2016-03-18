@@ -271,3 +271,22 @@ void ScriptApiNode::node_falling_update_single(v3s16 p)
 	PCALL_RES(lua_pcall(L, 1, 0, error_handler));
 	lua_pop(L, 1);  // Pop error handler
 }
+
+void ScriptApiNode::node_on_flood(v3s16 p, MapNode node)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+		int error_handler = PUSH_ERROR_HANDLER(L);
+
+	INodeDefManager *ndef = getServer()->ndef();
+
+	// Push callback function on stack
+	if (!getItemCallback(ndef->get(node).name.c_str(), "on_flood"))
+		return;
+
+	// Call function
+	push_v3s16(L, p);
+	pushnode(L, node, ndef);
+	PCALL_RES(lua_pcall(L, 2, 0, error_handler));
+	lua_pop(L, 1);  // Pop error handler
+}
