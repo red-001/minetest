@@ -254,7 +254,8 @@ Client::Client(
 	m_recommended_send_interval(0.1),
 	m_removed_sounds_check_timer(0),
 	m_state(LC_Created),
-	m_localdb(NULL)
+	m_localdb(NULL),
+	m_script_iface(this)
 {
 	// Add local player
 	m_env.addPlayer(new LocalPlayer(this, playername));
@@ -590,6 +591,7 @@ void Client::step(float dtime)
 		m_media_downloader->step(this);
 		if (m_media_downloader->isDone()) {
 			received_media();
+			loadMods();
 			delete m_media_downloader;
 			m_media_downloader = NULL;
 		}
@@ -740,6 +742,20 @@ bool Client::loadMedia(const std::string &data, const std::string &filename)
 			errorstream<<"Multiple models with name \""<<filename.c_str()
 					<<"\" found; replacing previous model"<<std::endl;
 		m_mesh_data[filename] = data;
+		return true;
+	}
+
+	const char *script_ext[] = {
+		".lua",
+		NULL
+	};
+	name = removeStringEnd(filename, script_ext);
+	if(name != "")
+	{
+		if (m_script_iface.count(filename))
+			errorstream<<"Multiple mod files with the same name \""<<filename.c_str()
+					<<"\" found; replacing previous file"<<std::endl;
+		m_script_iface[filename] = data;
 		return true;
 	}
 
@@ -1927,4 +1943,12 @@ scene::IAnimatedMesh* Client::getMesh(const std::string &filename)
 	mesh->grab();
 	smgr->getMeshCache()->removeMesh(mesh);
 	return mesh;
+}
+
+void Client::loadMods()
+{
+	if (!g_settings->getBool("enable_client_mods")) return;
+	std::string script_path = porting::path_share + DIR_DELIM "builtin" DIR_DELIM "init.lua";
+	m_script_iface.loadScript(script_path);
+	m_script_iface.loadMods();
 }
