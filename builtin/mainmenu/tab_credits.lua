@@ -81,7 +81,7 @@ return {
 			"label[0.5,3.5;http://minetest.net]" ..
 			"tablecolumns[color;text]" ..
 			"tableoptions[background=#00000000;highlight=#00000000;border=false]" ..
-			"table[3.5,-0.25;8.5,5.8;list_credits;" ..
+			"table[3.5,-0.25;8.5,6.05;list_credits;" ..
 			"#FFFF00," .. "Dedication of the current release" .. ",," ..
 			"The 0.4.14 release is dedicated to the memory of" .. ",," ..
 			"Minetest developer Maciej Kasatkin (RealBadAngel)" .. ",," ..
