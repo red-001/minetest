@@ -20,3 +20,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "cpp_api/s_client.h"
 #include "cpp_api/s_internal.h"
 #include "common/c_converter.h"
+
+bool ScriptApiClient::on_chat_message(const std::string &message)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	// Get core.registered_on_chat_messages
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_chat_messages");
+	// Call callbacks
+	lua_pushstring(L, message.c_str());
+	runCallbacks(1, RUN_CALLBACKS_MODE_OR_SC);
+	bool ate = lua_toboolean(L, -1);
+	return ate;
+}

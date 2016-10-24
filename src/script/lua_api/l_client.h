@@ -27,8 +27,26 @@ private:
 	// get_client_status()
 	static int l_get_client_status(lua_State *L);
 
-	// is_singleplayer()
-	static int l_is_singleplayer(lua_State *L);
+	// send_chat_message()
+	static int l_send_chat_message(lua_State *L);
+
+	// send_chat_message()
+	static int l_display_chat_message(lua_State *L);
+
+	// get_player_name()
+	static int l_get_player_name(lua_State *L);
+
+	// get_last_run_mod()
+	static int l_get_last_run_mod(lua_State *L);
+
+	// set_last_run_mod(modname)
+	static int l_set_last_run_mod(lua_State *L);
+
+	// set_pitch(pitch)
+	static int l_set_pitch(lua_State *L);
+
+	// set_yaw(yaw)
+	static int l_set_yaw(lua_State *L);
 
 	// get_current_modname()
 	static int l_get_current_modname(lua_State *L);

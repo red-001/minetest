@@ -4,6 +4,7 @@ local commonpath = scriptpath.."common"..DIR_DELIM
 local gamepath = scriptpath.."game"..DIR_DELIM
 
 dofile(commonpath.."vector.lua")
+dofile(commonpath.."run_callbacks.lua")
 
 dofile(gamepath.."constants.lua")
 dofile(gamepath.."item.lua")

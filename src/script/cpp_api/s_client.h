@@ -27,6 +27,7 @@ class ScriptApiClient
 		: virtual public ScriptApiBase
 {
 public:
+	bool on_chat_message(const std::string &message);
 private:
 	void readPrivileges(int index, std::set<std::string> &result);
 };

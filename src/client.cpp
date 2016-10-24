@@ -1572,20 +1572,15 @@ void Client::typeChatMessage(const std::wstring &message)
 	// Discard empty line
 	if(message == L"")
 		return;
-
-	// Send to others
-	sendChatMessage(message);
-
-	// Show locally
-	if (message[0] == L'/')
+	// Run callbacks
+	bool ate = m_script_iface.on_chat_message(wide_to_utf8(message));
+	// Send the message out if it isn't handled by lua code
+	if (!ate)
 	{
-		m_chat_queue.push((std::wstring)L"issued command: " + message);
-	}
-	else
-	{
-		LocalPlayer *player = m_env.getLocalPlayer();
-		assert(player != NULL);
-		std::wstring name = narrow_to_wide(player->getName());
+		// Send to others
+		sendChatMessage(message);
+		// Show locally
+		std::wstring name = narrow_to_wide(getPlayerName());
 		m_chat_queue.push((std::wstring)L"<" + name + L"> " + message);
 	}
 }

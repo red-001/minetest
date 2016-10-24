@@ -3374,6 +3374,12 @@ void Game::processClientEvents(CameraOrientation *cam, float *damage_flash)
 		} else if (event.type == CE_PLAYER_FORCE_MOVE) {
 			cam->camera_yaw = event.player_force_move.yaw;
 			cam->camera_pitch = event.player_force_move.pitch;
+		}
+		else if (event.type == CE_PLAYER_SET_PITCH) {
+			cam->camera_pitch = event.player_force_move.pitch;
+		}
+		else if (event.type == CE_PLAYER_SET_YAW) {
+			cam->camera_yaw = event.player_force_move.yaw;
 		} else if (event.type == CE_DEATHSCREEN) {
 			show_deathscreen(&current_formspec, client, gamedef, texture_src,
 				device, &input->joystick, client);

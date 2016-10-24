@@ -35,6 +35,80 @@ int ModApiClient::l_get_client_status(lua_State *L)
 	return 1;
 }
 
+// send_chat_message()
+int ModApiClient::l_send_chat_message(lua_State *L)
+{	
+	NO_MAP_LOCK_REQUIRED;
+	
+	std::wstring message = utf8_to_wide(luaL_checkstring(L, 1));
+	getClient(L)->sendChatMessage(message);
+	return 1;
+}
+
+// display_chat_message(message)
+int ModApiClient::l_display_chat_message(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	
+	std::string message = luaL_checkstring(L, 1);
+	getClient(L)->display_chat(utf8_to_wide(message));
+	return 1;
+}
+
+// get_player_name()
+int ModApiClient::l_get_player_name(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	const std::string name = getClient(L)->getPlayerName();
+	lua_pushstring(L, name.c_str());
+	return 1;
+}
+
+// get_last_run_mod()
+int ModApiClient::l_get_last_run_mod(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	lua_rawgeti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_CURRENT_MOD_NAME);
+	const char *current_mod = lua_tostring(L, -1);
+	if (current_mod == NULL || current_mod[0] == '\0') {
+		lua_pop(L, 1);
+		lua_pushstring(L, getScriptApiBase(L)->getOrigin().c_str());
+	}
+	return 1;
+}
+
+// set_last_run_mod(modname)
+int ModApiClient::l_set_last_run_mod(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+#ifdef SCRIPTAPI_DEBUG
+	const char *mod = lua_tostring(L, 1);
+	getScriptApiBase(L)->setOriginDirect(mod);
+	//printf(">>>> last mod set from Lua: %s\n", mod);
+#endif
+	return 0;
+}
+
+int ModApiClient::l_set_yaw(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	ClientEvent event;
+	event.type = CE_PLAYER_SET_YAW;
+	event.player_set_yaw.yaw = luaL_checkint(L, 1);
+	getClient(L)->push_event(event);
+	return 0;
+}
+
+int ModApiClient::l_set_pitch(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	ClientEvent event;
+	event.type = CE_PLAYER_SET_PITCH;
+	event.player_set_pitch.pitch = luaL_checkint(L, 1);
+	getClient(L)->push_event(event);
+	return 0;
+}
+
 // print(text)
 int ModApiClient::l_print(lua_State *L)
 {
@@ -275,14 +349,6 @@ int ModApiClient::l_sound_stop(lua_State *L)
 	return 0;
 }
 
-// is_singleplayer()
-int ModApiClient::l_is_singleplayer(lua_State *L)
-{
-//	NO_MAP_LOCK_REQUIRED;
-//	lua_pushboolean(L, getClient(L)->isSingleplayer());
-	return 1;
-}
-
 #ifndef NDEBUG
 // cause_error(type_of_error)
 int ModApiClient::l_cause_error(lua_State *L)
@@ -316,7 +382,16 @@ int ModApiClient::l_cause_error(lua_State *L)
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_client_status);
-	API_FCT(is_singleplayer);
+	API_FCT(get_player_name);
+
+	API_FCT(send_chat_message);
+	API_FCT(display_chat_message);
+
+	API_FCT(get_last_run_mod);
+	API_FCT(set_last_run_mod);
+
+	API_FCT(set_pitch);
+	API_FCT(set_yaw);
 
 	API_FCT(get_current_modname);
 	API_FCT(get_modpath);

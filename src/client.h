@@ -139,6 +139,8 @@ enum ClientEventType
 	CE_NONE,
 	CE_PLAYER_DAMAGE,
 	CE_PLAYER_FORCE_MOVE,
+	CE_PLAYER_SET_YAW,
+	CE_PLAYER_SET_PITCH,
 	CE_DEATHSCREEN,
 	CE_SHOW_FORMSPEC,
 	CE_SPAWN_PARTICLE,
@@ -164,6 +166,12 @@ struct ClientEvent
 			f32 pitch;
 			f32 yaw;
 		} player_force_move;
+		struct{
+			f32 yaw;
+		} player_set_yaw;
+		struct{
+			f32 pitch;
+		} player_set_pitch;
 		struct{
 			bool set_camera_point_target;
 			f32 camera_point_target_x;
@@ -556,6 +564,9 @@ public:
 	inline const std::string getPlayerName()
 	{ return m_env.getLocalPlayer()->getName(); }
 
+	void display_chat(std::wstring string) { m_chat_queue.push(string); }
+
+	void push_event(ClientEvent event) { m_client_event_queue.push(event); }
 private:
 
 	// Virtual methods from con::PeerHandler
