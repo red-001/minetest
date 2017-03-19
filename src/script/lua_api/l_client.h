@@ -56,8 +56,8 @@ private:
 	// get_wielded_item()
 	static int l_get_wielded_item(lua_State *L);
 
-	// get_local_player()
-	static int l_get_local_player(lua_State *L);
+	// get_player_list()
+	static int l_get_player_list(lua_State *L);
 
 public:
 	static void Initialize(lua_State *L, int top);

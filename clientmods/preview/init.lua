@@ -40,6 +40,14 @@ core.register_chatcommand("dump", {
 	end,
 })
 
+-- This is an example function to ensure it's working properly, should be removed before merge
+core.register_chatcommand("test", {
+	func = function(param)
+		print(minetest.get_player_list())
+		return true, "Test finished"
+	end,
+})
+
 core.register_chatcommand("colorize_test", {
 	func = function(param)
 		return true, core.colorize("red", param)

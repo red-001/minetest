@@ -150,17 +150,12 @@ int ModApiClient::l_get_wielded_item(lua_State *L)
 	return 1;
 }
 
-int ModApiClient::l_get_local_player(lua_State *L)
+int ModApiClient::l_get_player_list(lua_State *L)
 {
 	Client *client = getClient(L);
-	Environment *env = getEnv(L);
-	if (!env) {
-		return 0;
-	}
-	LocalObjectRef::create(L, )
+	const UNORDERED_MAP<u16, ClientActiveObject*> object_list = client->getEnv().getActiveObjects();
 	return 1;
 }
-
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_current_modname);
@@ -173,5 +168,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(get_node);
 	API_FCT(get_node_or_nil);
 	API_FCT(get_wielded_item);
-	API_FCT(get_local_player);
+	API_FCT(get_player_list);
 }
