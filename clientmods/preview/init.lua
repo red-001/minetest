@@ -53,6 +53,16 @@ core.register_chatcommand("test_node", {
 	end,
 })
 
+core.register_chatcommand("test", {
+	func = function(param)
+		local cam = core.ui.camera
+		print(cam)
+		print(dump(cam:get_mode()))
+		print(dump(cam:toggle_mode()))
+		return true, dump(core)
+	end,
+})
+
 local function preview_minimap()
 	local minimap = core.ui.minimap
 	minimap:set_mode(4)

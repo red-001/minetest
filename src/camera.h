@@ -167,6 +167,11 @@ public:
 		return m_camera_mode;
 	}
 
+	inline void setCameraMode(CameraMode mode)
+	{
+		m_camera_mode = mode;
+	}
+
 	Nametag *addNametag(scene::ISceneNode *parent_node,
 		std::string nametag_text, video::SColor nametag_color);
 

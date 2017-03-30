@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "lua_api/l_util.h"
 #include "lua_api/l_item.h"
 #include "lua_api/l_nodemeta.h"
+#include "lua_api/l_camera.h"
 
 ClientScripting::ClientScripting(Client *client):
 	ScriptApiBase()
@@ -42,7 +43,7 @@ ClientScripting::ClientScripting(Client *client):
 
 	lua_getglobal(L, "core");
 	int top = lua_gettop(L);
-
+	errorstream << top << std::endl;
 	lua_newtable(L);
 	lua_setfield(L, -2, "ui");
 
@@ -50,6 +51,7 @@ ClientScripting::ClientScripting(Client *client):
 	lua_pop(L, 1);
 
 	LuaMinimap::create(L, client->getMinimap());
+	LuaCamera::create(L);
 
 	// Push builtin initialization type
 	lua_pushstring(L, "client");
@@ -70,4 +72,5 @@ void ClientScripting::InitializeModApi(lua_State *L, int top)
 	StorageRef::Register(L);
 	LuaMinimap::Register(L);
 	NodeMetaRef::RegisterClient(L);
+	LuaCamera::Register(L);
 }
