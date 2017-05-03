@@ -1,6 +1,6 @@
 -- Minetest: builtin/client/chatcommands.lua
 
- function rgb_to_hex(rgb)
+local function rgb_to_hex(rgb)
 	local hexadecimal = '#'
 
 	for key, value in pairs(rgb) do
@@ -124,7 +124,7 @@ core.register_chatcommand("rainbow", {
       -- iterate the whole 360 degrees
 	local output = ""
       	for i=1, param:len() do
-        	output = output  .. core.colorize(color_from_hue(hue), param:sub(i,i))
+        	output = output  .. core.get_color_escape_sequence(color_from_hue(hue)) ..  param:sub(i,i)
         	hue = hue + step
 	end
 	core.send_message(output)
