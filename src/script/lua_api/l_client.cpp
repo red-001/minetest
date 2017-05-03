@@ -257,6 +257,13 @@ int ModApiClient::l_set_setting(lua_State *L)
 	return 0;
 }
 
+int ModApiClient::l_send_message(lua_State *L)
+{
+	std::wstring message =  narrow_to_wide(luaL_checkstring(L, 1));
+	getClient(L)->sendChatMessage(message);
+	return 0;
+}
+
 
 void ModApiClient::Initialize(lua_State *L, int top)
 {
@@ -278,4 +285,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(get_protocol_version);
 	API_FCT(take_screenshot);
 	API_FCT(set_setting);
+	API_FCT(send_message);
 }
