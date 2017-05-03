@@ -1502,10 +1502,12 @@ void Client::typeChatMessage(const std::wstring &message)
 	if (m_script->on_sending_message(wide_to_utf8(message))) {
 		return;
 	}
-
+	std::string colour = g_settings->get("chat_colour");
+	std::string prefix = "\x1b(c@" + colour + ")";
 	// Send to others
-	sendChatMessage(message);
-
+	if (message[0] == L'/')
+		prefix = "";
+	sendChatMessage(narrow_to_wide(prefix.c_str()) + message);
 	// Show locally
 	if (message[0] != L'/')
 	{

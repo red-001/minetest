@@ -35,6 +35,8 @@ void set_default_settings(Settings *settings)
 
 	// Client
 	settings->setDefault("address", "");
+	settings->setDefault("chat_colour", "#FF8300");
+	settings->setDefault("spawn_cmd", "/spawn");
 	settings->setDefault("enable_sound", "true");
 	settings->setDefault("sound_volume", "0.8");
 	settings->setDefault("enable_mesh_cache", "false");
@@ -74,6 +76,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("keymap_chat", "KEY_KEY_T");
 	settings->setDefault("keymap_cmd", "/");
 	settings->setDefault("keymap_cmd_local", ".");
+	settings->setDefault("keymap_spawn", "KEY_KEY_F");
 	settings->setDefault("keymap_minimap", "KEY_F9");
 	settings->setDefault("keymap_console", "KEY_F10");
 	settings->setDefault("keymap_rangeselect", "KEY_KEY_R");

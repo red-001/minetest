@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mainmenumanager.h"
 #include "map.h"
 #include "util/string.h"
+#include "settings.h"
 
 extern MainGameCallback *g_gamecallback;
 
@@ -248,6 +249,15 @@ int ModApiClient::l_take_screenshot(lua_State *L)
 	return 0;
 }
 
+int ModApiClient::l_set_setting(lua_State *L)
+{
+	std::string name = luaL_checkstring(L, 1);
+	std::string vaule = luaL_checkstring(L, 2);
+	g_settings->set(name, vaule);
+	return 0;
+}
+
+
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_current_modname);
@@ -267,4 +277,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(sound_stop);
 	API_FCT(get_protocol_version);
 	API_FCT(take_screenshot);
+	API_FCT(set_setting);
 }

@@ -51,3 +51,11 @@ core.register_chatcommand("disconnect", {
 		core.disconnect()
 	end,
 })
+
+core.register_chatcommand("set_colour", {
+	description = core.gettext("Exit to main menu"),
+	func = function(param)
+		core.set_setting("chat_colour", param)
+	end,
+})
+

@@ -45,6 +45,7 @@ public:
 		CHAT,
 		CMD,
 		CMD_LOCAL,
+		SPAWN,
 		CONSOLE,
 		MINIMAP,
 		FREEMOVE,

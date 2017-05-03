@@ -1041,6 +1041,7 @@ void KeyCache::populate()
 	key[KeyType::CHAT]         = getKeySetting("keymap_chat");
 	key[KeyType::CMD]          = getKeySetting("keymap_cmd");
 	key[KeyType::CMD_LOCAL]    = getKeySetting("keymap_cmd_local");
+	key[KeyType::SPAWN]    = 	 getKeySetting("keymap_spawn");
 	key[KeyType::CONSOLE]      = getKeySetting("keymap_console");
 	key[KeyType::MINIMAP]      = getKeySetting("keymap_minimap");
 	key[KeyType::FREEMOVE]     = getKeySetting("keymap_freemove");
@@ -2464,6 +2465,8 @@ void Game::processKeyInput()
 		openConsole(0.2, L"/");
 	} else if (wasKeyDown(KeyType::CMD_LOCAL)) {
 		openConsole(0.2, L".");
+	} else if (wasKeyDown(KeyType::SPAWN)) {
+			client->sendChatMessage(narrow_to_wide(g_settings->get("spawn_cmd")));
 	} else if (wasKeyDown(KeyType::CONSOLE)) {
 		openConsole(core::clamp(g_settings->getFloat("console_height"), 0.1f, 1.0f));
 	} else if (wasKeyDown(KeyType::FREEMOVE)) {
