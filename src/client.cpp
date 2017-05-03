@@ -1505,7 +1505,7 @@ void Client::typeChatMessage(const std::wstring &message)
 	std::string colour = g_settings->get("chat_colour");
 	std::string prefix = "\x1b(c@" + colour + ")";
 	// Send to others
-	if (message[0] == L'/')
+	if (message[0] == L'/' || g_settings->getBool("disable_chat_colour_codes") == true)
 		prefix = "";
 	sendChatMessage(narrow_to_wide(prefix.c_str()) + message);
 	// Show locally

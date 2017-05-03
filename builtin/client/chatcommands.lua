@@ -110,6 +110,7 @@ core.register_chatcommand("set_colour", {
 	description = core.gettext("Change chat colour"),
 	func = function(param)
 		core.set_setting("chat_colour", param)
+		return true
 	end,
 })
 
@@ -128,6 +129,24 @@ core.register_chatcommand("rainbow", {
         	hue = hue + step
 	end
 	core.send_message(output)
+	return true
 end,
+})
+
+
+core.register_chatcommand("colour_enable", {
+	description = core.gettext("Change chat colour"),
+	func = function(_)
+		core.set_setting("disable_chat_colour_codes", "false")
+		return true
+	end,
+})
+
+core.register_chatcommand("colour_disable", {
+	description = core.gettext("Change chat colour"),
+	func = function(_)
+		core.set_setting("disable_chat_colour_codes", "true")
+	return true
+	end,
 })
 

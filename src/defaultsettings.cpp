@@ -36,6 +36,7 @@ void set_default_settings(Settings *settings)
 	// Client
 	settings->setDefault("address", "");
 	settings->setDefault("chat_colour", "#FF8300");
+	settings->setDefault("disable_chat_colour_codes", "false");
 	settings->setDefault("spawn_cmd", "/spawn");
 	settings->setDefault("enable_sound", "true");
 	settings->setDefault("sound_volume", "0.8");
