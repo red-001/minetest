@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "filesys.h"
 #include "porting.h"
 #include "server.h"
+#include "client.h"
 #include "settings.h"
 
 #include <cerrno>
@@ -255,6 +256,7 @@ void ScriptApiSecurity::initializeSecurityClient()
 	};
 	static const char *debug_whitelist[] = {
 		"getinfo",
+		"traceback",
 	};
 
 #if USE_LUAJIT
@@ -626,8 +628,35 @@ int ScriptApiSecurity::sl_g_load(lua_State *L)
 
 int ScriptApiSecurity::sl_g_loadfile(lua_State *L)
 {
-	const char *path = NULL;
+#ifndef SERVER
+	lua_rawgeti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_SCRIPTAPI);
+	ScriptApiBase *script = (ScriptApiBase *) lua_touserdata(L, -1);
+	lua_pop(L, 1);
 
+	if (script->getType() == client_scripting) {
+		std:: string path = lua_tostring(L, 1);
+		std::string chunk_name = "@/0" + path;
+		const std::string *file = script->getClient()->getModFile(path);
+		if (file == NULL) {
+			std::string error_msg = "Coudln't find script called:" + path;
+			lua_pushnil(L);
+			lua_pushstring(L, error_msg.c_str());
+			return 2;
+		}
+
+		if(file->at(0) == LUA_SIGNATURE[0]) {
+			lua_pushliteral(L, "Bytecode prohibited when mod security is enabled.");
+		} else {
+			if (luaL_loadbuffer(L, file->c_str(), file->length(), path.c_str())) {
+				lua_pushnil(L);
+				lua_insert(L, -2);
+				return 2;
+			}
+		}
+		return 1;
+	}
+#endif
+	const char *path = NULL;
 	if (lua_isstring(L, 1)) {
 		path = lua_tostring(L, 1);
 		CHECK_SECURE_PATH_INTERNAL(L, path, false, NULL);

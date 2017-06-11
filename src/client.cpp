@@ -47,6 +47,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "guiscalingfilter.h"
 #include "script/scripting_client.h"
 #include "game.h"
+#include <iterator>
 
 extern gui::IGUIEnvironment* guienv;
 
@@ -141,17 +142,17 @@ Client::Client(
 	m_script->setEnv(&m_env);
 }
 
-void Client::initMods()
+void Client::loadMods()
 {
-	m_script->loadMod(getBuiltinLuaPath() + DIR_DELIM "init.lua", BUILTIN_MOD_NAME);
+	// Load builtin
+	loadModIntoMemory(BUILTIN_MOD_NAME, getBuiltinLuaPath());
 
 	// If modding is not enabled, don't load mods, just builtin
 	if (!m_modding_enabled) {
 		return;
 	}
-
 	ClientModConfiguration modconf(getClientModsLuaPath());
-	std::vector<ModSpec> mods = modconf.getMods();
+	m_mods = modconf.getMods();
 	std::vector<ModSpec> unsatisfied_mods = modconf.getUnsatisfiedMods();
 	// complain about mods with unsatisfied dependencies
 	if (!modconf.isConsistent()) {
@@ -160,25 +161,75 @@ void Client::initMods()
 
 	// Print mods
 	infostream << "Client Loading mods: ";
-	for (std::vector<ModSpec>::const_iterator i = mods.begin();
-		i != mods.end(); ++i) {
+	for (std::vector<ModSpec>::const_iterator i = m_mods.begin();
+		i != m_mods.end(); ++i) {
 		infostream << (*i).name << " ";
 	}
-
 	infostream << std::endl;
+
 	// Load and run "mod" scripts
-	for (std::vector<ModSpec>::const_iterator it = mods.begin();
-		it != mods.end(); ++it) {
+	for (std::vector<ModSpec>::const_iterator it = m_mods.begin();
+		it != m_mods.end(); ++it) {
 		const ModSpec &mod = *it;
 		if (!string_allowed(mod.name, MODNAME_ALLOWED_CHARS)) {
 			throw ModError("Error loading mod \"" + mod.name +
 				"\": Mod name does not follow naming conventions: "
 					"Only characters [a-z0-9_] are allowed.");
 		}
-		std::string script_path = mod.path + DIR_DELIM + "init.lua";
-		infostream << "  [" << padStringRight(mod.name, 12) << "] [\""
-			<< script_path << "\"]" << std::endl;
-		m_script->loadMod(script_path, mod.name);
+		loadModIntoMemory(mod.name, mod.path);
+	}
+}
+
+void Client::loadModIntoMemory(std::string mod_name, std::string mod_path)
+{
+	std::vector<fs::DirListNode> mod = fs::GetDirListing(mod_path);
+	for (unsigned int j=0; j < mod.size(); j++){
+		std::string filename = mod[j].name;
+		if (mod[j].dir) {
+			loadModSubfolder(mod_name, mod_path, filename + DIR_DELIM);
+			continue;
+		}
+		errorstream << mod_path + filename << std::endl;
+		std::ifstream file (mod_path + DIR_DELIM + filename);
+		std::stringstream data;
+		data << file.rdbuf();
+		m_mod_files[mod_name + ":" + filename] = data.str();
+	}
+}
+
+void Client::loadModSubfolder(std::string mod_name, std::string mod_path,
+			std::string mod_subpath)
+{
+	std::string full_path = mod_path + DIR_DELIM + mod_subpath;
+	std::vector<fs::DirListNode> mod = fs::GetDirListing(full_path);
+	for (unsigned int j=0; j < mod.size(); j++){
+		std::string filename = mod[j].name;
+		if (mod[j].dir) {
+			loadModSubfolder(mod_name, mod_path, mod_subpath
+					+ filename + DIR_DELIM);
+			continue;
+		}
+		std::ifstream file (full_path + DIR_DELIM + filename);
+		std::stringstream data;
+		data << file.rdbuf();
+		m_mod_files[mod_name + ":" + mod_subpath + filename] = data.str();
+	}
+}
+
+void Client::initMods()
+{
+	m_script->loadModFromMemory(BUILTIN_MOD_NAME);
+
+	// If modding is not enabled, don't load mods, just builtin
+	if (!m_modding_enabled) {
+		return;
+	}
+
+	// Load and run "mod" scripts
+	for (std::vector<ModSpec>::const_iterator it = m_mods.begin();
+		it != m_mods.end(); ++it) {
+		const ModSpec &mod = *it;
+		m_script->loadModFromMemory(mod.name);
 	}
 }
 
@@ -697,6 +748,22 @@ bool Client::loadMedia(const std::string &data, const std::string &filename)
 		if(m_mesh_data.count(filename))
 			errorstream<<"Multiple models with name \""<<filename.c_str()
 					<<"\" found; replacing previous model"<<std::endl;
+		m_mesh_data[filename] = data;
+		return true;
+	}
+
+	const char *mod_file_ext[] = {
+		".lua",
+		NULL
+	};
+	name = removeStringEnd(filename, mod_file_ext);
+	if(name != "")
+	{
+		errorstream<<"Client: Loading mod file into memory: "
+				<<"\""<<filename<<"\""<<std::endl;
+		if(m_mesh_data.count(filename))
+			errorstream<<"Multiple script with name \""<<filename.c_str()
+					<<"\" found; replacing previous script"<<std::endl;
 		m_mesh_data[filename] = data;
 		return true;
 	}
@@ -1941,6 +2008,17 @@ scene::IAnimatedMesh* Client::getMesh(const std::string &filename)
 	mesh->grab();
 	smgr->getMeshCache()->removeMesh(mesh);
 	return mesh;
+}
+
+const std::string* Client::getModFile(const std::string &filename)
+{
+	StringMap::const_iterator it = m_mod_files.find(filename);
+	if (it == m_mod_files.end()) {
+		errorstream << "Client::getModFile(): File not found: \"" << filename
+			<< "\"" << std::endl;
+		return NULL;
+	}
+	return &it->second;
 }
 
 bool Client::registerModStorage(ModMetadata *storage)

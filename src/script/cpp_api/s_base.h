@@ -54,6 +54,8 @@ extern "C" {
 #define setOriginFromTable(index) \
 	setOriginFromTableRaw(index, __FUNCTION__)
 
+enum scripting_type { client_scripting, server_scripting, mainmenu_scripting };
+
 class Server;
 #ifndef SERVER
 class Client;
@@ -73,6 +75,11 @@ public:
 	void loadMod(const std::string &script_path, const std::string &mod_name);
 	void loadScript(const std::string &script_path);
 
+#ifndef SERVER
+	void loadModFromMemory(const std::string &mod_name);
+	void loadScriptFromMemory(const std::string *script_string, const std::string &script_name);
+#endif
+
 	void runCallbacksRaw(int nargs,
 		RunCallbacksMode mode, const char *fxn);
 
@@ -82,6 +89,8 @@ public:
 
 	IGameDef *getGameDef() { return m_gamedef; }
 	Server* getServer();
+	void setType(scripting_type type) { m_type = type; }
+	scripting_type getType() { return m_type; }
 #ifndef SERVER
 	Client* getClient();
 #endif
@@ -133,6 +142,7 @@ private:
 	IGameDef*       m_gamedef;
 	Environment*    m_environment;
 	GUIEngine*      m_guiengine;
+	scripting_type  m_type;
 };
 
 #endif /* S_BASE_H_ */

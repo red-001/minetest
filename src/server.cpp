@@ -2370,6 +2370,7 @@ void Server::fillMediaCache()
 		paths.push_back(mod.path + DIR_DELIM + "sounds");
 		paths.push_back(mod.path + DIR_DELIM + "media");
 		paths.push_back(mod.path + DIR_DELIM + "models");
+		paths.push_back(mod.path + DIR_DELIM + "client");
 	}
 	paths.push_back(porting::path_user + DIR_DELIM + "textures" + DIR_DELIM + "server");
 
@@ -2394,6 +2395,7 @@ void Server::fillMediaCache()
 				".pcx", ".ppm", ".psd", ".wal", ".rgb",
 				".ogg",
 				".x", ".b3d", ".md2", ".obj",
+				".lua",
 				NULL
 			};
 			if (removeStringEnd(filename, supported_ext) == ""){
