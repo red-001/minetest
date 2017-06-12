@@ -210,6 +210,7 @@ void Client::loadModSubfolder(std::string mod_name, std::string mod_path,
 		std::ifstream file (full_path + DIR_DELIM + filename);
 		std::stringstream data;
 		data << file.rdbuf();
+		std::replace( mod_subpath.begin(), mod_subpath.end(), DIR_DELIM_CHAR, '/');
 		m_mod_files[mod_name + ":" + mod_subpath + filename] = data.str();
 	}
 }

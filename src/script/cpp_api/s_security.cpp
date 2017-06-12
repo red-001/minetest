@@ -287,6 +287,8 @@ void ScriptApiSecurity::initializeSecurityClient()
 
 	// And replace unsafe ones
 	SECURE_API(g, dofile);
+	SECURE_API(g, load);
+	SECURE_API(g, loadfile);
 	SECURE_API(g, loadstring);
 	SECURE_API(g, require);
 	lua_pop(L, 1);
