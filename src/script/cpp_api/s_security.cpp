@@ -322,6 +322,10 @@ void ScriptApiSecurity::initializeSecurityClient()
 #endif
 
 	lua_pop(L, 1); // Pop globals_backup
+
+	// Remove globals_backup
+	lua_pushnil(L);
+	lua_rawseti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_GLOBALS_BACKUP);
 }
 
 int ScriptApiSecurity::backupGlobals(lua_State *L)
