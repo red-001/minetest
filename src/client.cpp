@@ -179,7 +179,7 @@ void Client::loadMods()
 	}
 }
 
-void Client::loadModIntoMemory(std::string mod_name, std::string mod_path)
+void Client::loadModIntoMemory(const std::string &mod_name, const std::string &mod_path)
 {
 	std::vector<fs::DirListNode> mod = fs::GetDirListing(mod_path);
 	for (unsigned int j=0; j < mod.size(); j++){
@@ -195,7 +195,7 @@ void Client::loadModIntoMemory(std::string mod_name, std::string mod_path)
 	}
 }
 
-void Client::loadModSubfolder(std::string mod_name, std::string mod_path,
+void Client::loadModSubfolder(const std::string &mod_name, const std::string &mod_path,
 			std::string mod_subpath)
 {
 	std::string full_path = mod_path + DIR_DELIM + mod_subpath;
