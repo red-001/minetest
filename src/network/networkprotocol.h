@@ -185,6 +185,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define TEXTURENAME_ALLOWED_CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-"
 
+#define CSM_FILESYSTEM_SPEICAL_CHARS ":/"
+
 enum ToClientCommand
 {
 	TOCLIENT_HELLO = 0x02,

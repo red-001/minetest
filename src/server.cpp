@@ -2370,6 +2370,16 @@ void Server::fillMediaCache()
 		paths.push_back(mod.path + DIR_DELIM + "sounds");
 		paths.push_back(mod.path + DIR_DELIM + "media");
 		paths.push_back(mod.path + DIR_DELIM + "models");
+
+		for (fs::DirListNode node : fs::GetDirListing(mod.path + DIR_DELIM + "client")){
+			if (node.dir) {
+				errorstream << "this example can't handle folders yet!" << std::endl;
+				continue;
+			}
+			std::string filename = node.name;
+			std::string path = mod.path + DIR_DELIM + "client" + DIR_DELIM + filename;
+			loadFileIntoMediaCache(path , mod.name + ":" + filename);
+		}
 	}
 	paths.push_back(porting::path_user + DIR_DELIM + "textures" + DIR_DELIM + "server");
 
@@ -2404,51 +2414,56 @@ void Server::fillMediaCache()
 			// Ok, attempt to load the file and add to cache
 			std::string filepath = mediapath + DIR_DELIM + filename;
 			// Read data
-			std::ifstream fis(filepath.c_str(), std::ios_base::binary);
-			if (!fis.good()) {
-				errorstream << "Server::fillMediaCache(): Could not open \""
-						<< filename << "\" for reading" << std::endl;
-				continue;
-			}
-			std::ostringstream tmp_os(std::ios_base::binary);
-			bool bad = false;
-			for(;;) {
-				char buf[1024];
-				fis.read(buf, 1024);
-				std::streamsize len = fis.gcount();
-				tmp_os.write(buf, len);
-				if (fis.eof())
-					break;
-				if (!fis.good()) {
-					bad = true;
-					break;
-				}
-			}
-			if(bad) {
-				errorstream<<"Server::fillMediaCache(): Failed to read \""
-						<< filename << "\"" << std::endl;
-				continue;
-			}
-			if(tmp_os.str().length() == 0) {
-				errorstream << "Server::fillMediaCache(): Empty file \""
-						<< filepath << "\"" << std::endl;
-				continue;
-			}
-
-			SHA1 sha1;
-			sha1.addBytes(tmp_os.str().c_str(), tmp_os.str().length());
-
-			unsigned char *digest = sha1.getDigest();
-			std::string sha1_base64 = base64_encode(digest, 20);
-			std::string sha1_hex = hex_encode((char*)digest, 20);
-			free(digest);
-
-			// Put in list
-			m_media[filename] = MediaInfo(filepath, sha1_base64);
-			verbosestream << "Server: " << sha1_hex << " is " << filename
-					<< std::endl;
+			loadFileIntoMediaCache(filepath, filename);
 		}
 	}
+}
+
+void Server::loadFileIntoMediaCache(const std::string &filepath, const std::string &filename)
+{
+	std::ifstream fis(filepath.c_str(), std::ios_base::binary);
+	if (!fis.good()) {
+		errorstream << "Server::fillMediaCache(): Could not open \""
+				<< filename << "\" for reading" << std::endl;
+		return;
+	}
+	std::ostringstream tmp_os(std::ios_base::binary);
+	bool bad = false;
+	for(;;) {
+		char buf[1024];
+		fis.read(buf, 1024);
+		std::streamsize len = fis.gcount();
+		tmp_os.write(buf, len);
+		if (fis.eof())
+			break;
+		if (!fis.good()) {
+			bad = true;
+			break;
+		}
+	}
+	if(bad) {
+		errorstream<<"Server::fillMediaCache(): Failed to read \""
+				<< filename << "\"" << std::endl;
+		return;
+	}
+	if(tmp_os.str().length() == 0) {
+		errorstream << "Server::fillMediaCache(): Empty file \""
+				<< filepath << "\"" << std::endl;
+		return;
+	}
+
+	SHA1 sha1;
+	sha1.addBytes(tmp_os.str().c_str(), tmp_os.str().length());
+
+	unsigned char *digest = sha1.getDigest();
+	std::string sha1_base64 = base64_encode(digest, 20);
+	std::string sha1_hex = hex_encode((char*)digest, 20);
+	free(digest);
+
+	// Put in list
+	m_media[filename] = MediaInfo(filepath, sha1_base64);
+	verbosestream << "Server: " << sha1_hex << " is " << filename
+			<< std::endl;
 }
 
 void Server::sendMediaAnnouncement(u16 peer_id)

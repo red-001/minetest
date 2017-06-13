@@ -701,6 +701,7 @@ private:
 	bool m_modding_enabled;
 	std::unordered_map<std::string, ModMetadata *> m_mod_storages;
 	std::vector<ModSpec> m_mods;
+	std::vector<ModSpec> m_server_mods;
 	float m_mod_storage_save_timer;
 	GameUIFlags *m_game_ui_flags;
 

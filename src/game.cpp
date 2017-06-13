@@ -2096,7 +2096,6 @@ bool Game::connectToServer(const std::string &playername,
 		fps_control.last_time = device->getTimer()->getTime();
 
 		client->loadMods();
-		client->initMods();
 
 		while (device->run()) {
 
@@ -2249,7 +2248,7 @@ bool Game::getServerContent(bool *aborted)
 					guienv, texture_src, dtime, progress);
 		}
 	}
-
+	client->initMods();
 	return true;
 }
 
