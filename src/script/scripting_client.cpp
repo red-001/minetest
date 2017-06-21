@@ -36,7 +36,7 @@ ClientScripting::ClientScripting(Client *client):
 	ScriptApiBase()
 {
 	setGameDef(client);
-	setType(client_scripting);
+	setType(ScriptingType::Client);
 
 	SCRIPTAPI_PRECHECKHEADER
 

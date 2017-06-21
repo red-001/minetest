@@ -54,7 +54,7 @@ extern "C" {
 #define setOriginFromTable(index) \
 	setOriginFromTableRaw(index, __FUNCTION__)
 
-enum scripting_type { client_scripting, server_scripting, mainmenu_scripting };
+enum class ScriptingType: u8 { Client, Server, MainMenu};
 
 class Server;
 #ifndef SERVER
@@ -89,8 +89,8 @@ public:
 
 	IGameDef *getGameDef() { return m_gamedef; }
 	Server* getServer();
-	void setType(scripting_type type) { m_type = type; }
-	scripting_type getType() { return m_type; }
+	void setType(ScriptingType type) { m_type = type; }
+	ScriptingType getType() { return m_type; }
 #ifndef SERVER
 	Client* getClient();
 #endif
@@ -142,7 +142,7 @@ private:
 	IGameDef*       m_gamedef;
 	Environment*    m_environment;
 	GUIEngine*      m_guiengine;
-	scripting_type  m_type;
+	ScriptingType  m_type;
 };
 
 #endif /* S_BASE_H_ */

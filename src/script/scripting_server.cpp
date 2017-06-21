@@ -50,7 +50,7 @@ extern "C" {
 ServerScripting::ServerScripting(Server* server)
 {
 	setGameDef(server);
-	setType(server_scripting);
+	setType(ScriptingType::Server);
 
 	// setEnv(env) is called by ScriptApiEnv::initializeEnvironment()
 	// once the environment has been created
