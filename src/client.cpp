@@ -145,6 +145,7 @@ void Client::loadMods()
 {
 	// Load builtin
 	loadModIntoMemory(BUILTIN_MOD_NAME, getBuiltinLuaPath());
+	m_script->loadModFromMemory(BUILTIN_MOD_NAME);
 
 	// If modding is not enabled, don't load mods, just builtin
 	if (!m_modding_enabled) {
@@ -217,17 +218,16 @@ void Client::loadModSubfolder(const std::string &mod_name, const std::string &mo
 
 void Client::initMods()
 {
-	m_script->loadModFromMemory(BUILTIN_MOD_NAME);
-
 	// If modding is not enabled, don't load mods, just builtin
 	if (!m_modding_enabled) {
 		return;
 	}
 
 	// Load and run "mod" scripts
-	for (std::vector<ModSpec>::const_iterator it = m_mods.begin();
-			it != m_mods.end(); ++it) {
-		const ModSpec &mod = *it;
+	for (ModSpec mod : m_mods) {
+		m_script->loadModFromMemory(mod.name);
+	}
+	for (ModSpec mod : m_server_mods) {
 		m_script->loadModFromMemory(mod.name);
 	}
 }
@@ -748,6 +748,16 @@ bool Client::loadMedia(const std::string &data, const std::string &filename)
 			errorstream<<"Multiple models with name \""<<filename.c_str()
 					<<"\" found; replacing previous model"<<std::endl;
 		m_mesh_data[filename] = data;
+		return true;
+	}
+
+	const char *CSM_ext[] = { ".lua", NULL };
+	name = removeStringEnd(filename, CSM_ext);
+	if(name != "")
+	{
+		std::string mod_name = filename.substr(0, filename.find(":"));
+		m_server_mods.push_back(ModSpec(mod_name));
+		m_mod_files[filename] = data;
 		return true;
 	}
 

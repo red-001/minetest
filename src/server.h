@@ -443,6 +443,7 @@ private:
 	void SendBlocks(float dtime);
 
 	void fillMediaCache();
+	void loadFileIntoMediaCache(const std::string &filepath, const std::string &filename);
 	void sendMediaAnnouncement(u16 peer_id);
 	void sendRequestedMedia(u16 peer_id,
 			const std::vector<std::string> &tosend);

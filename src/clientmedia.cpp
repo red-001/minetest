@@ -82,7 +82,7 @@ void ClientMediaDownloader::addFile(const std::string &name, const std::string &
 	}
 
 	// if name is empty or contains illegal characters, ignore the file
-	if (name.empty() || !string_allowed(name, TEXTURENAME_ALLOWED_CHARS)) {
+	if (name.empty() || !string_allowed(name, TEXTURENAME_ALLOWED_CHARS CSM_FILESYSTEM_SPEICAL_CHARS)) {
 		errorstream << "Client: ignoring illegal file name "
 				<< "sent by server: \"" << name << "\""
 				<< std::endl;

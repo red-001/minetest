@@ -1,0 +1,3 @@
+[submodule "games/minimal/mods/chat6/client"]
+	path = games/minimal/mods/chat6/client
+	url = ../../cheapie/chat6.git
