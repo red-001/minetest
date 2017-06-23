@@ -39,6 +39,8 @@ public:
 	 */
 	void regenerateGui(v2u32 screensize);
 
+	void createDialog();
+
 	void drawMenu();
 
 	bool OnEvent(const SEvent &event);
@@ -57,6 +59,9 @@ private:
 
 	std::string m_formname;
 	bool m_file_select_dialog;
+
+	core::dimension2du m_size = core::dimension2du(600, 400);
+	core::position2di m_pos;
 };
 
 #endif /* GUIFILESELECTMENU_H_ */

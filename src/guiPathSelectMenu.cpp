@@ -41,19 +41,22 @@ void GUIFileSelectMenu::regenerateGui(v2u32 screensize)
 	removeChildren();
 	m_fileOpenDialog = 0;
 
-	core::dimension2du size(600, 400);
 	core::rect<s32> rect(0, 0, screensize.X, screensize.Y);
 
 	DesiredRect = rect;
 	recalculateAbsolutePosition(false);
 
-	m_fileOpenDialog =
-			Environment->addFileOpenDialog(m_title.c_str(), false, this, -1);
+	m_pos = core::position2di(screensize.X / 2 - m_size.Width / 2,
+			screensize.Y / 2 - m_size.Height / 2);
+	createDialog();
+}
 
-	core::position2di pos = core::position2di(screensize.X / 2 - size.Width / 2,
-			screensize.Y / 2 - size.Height / 2);
-	m_fileOpenDialog->setRelativePosition(pos);
-	m_fileOpenDialog->setMinSize(size);
+void GUIFileSelectMenu::createDialog()
+{
+	m_fileOpenDialog =
+				Environment->addFileOpenDialog(m_title.c_str(), false, this, -1);
+	m_fileOpenDialog->setRelativePosition(m_pos);
+	m_fileOpenDialog->setMinSize(m_size);
 }
 
 void GUIFileSelectMenu::drawMenu()
@@ -97,12 +100,20 @@ bool GUIFileSelectMenu::OnEvent(const SEvent &event)
 			acceptInput();
 			return true;
 		case gui::EGET_DIRECTORY_SELECTED:
-			m_accepted = !m_file_select_dialog;
-			acceptInput();
+			if (!m_file_select_dialog) {
+				m_accepted = true;
+				acceptInput();
+			} else {
+				createDialog();
+			}
 			return true;
 		case gui::EGET_FILE_SELECTED:
-			m_accepted = m_file_select_dialog;
-			acceptInput();
+			if (m_file_select_dialog) {
+				m_accepted = true;
+				acceptInput();
+			} else {
+				createDialog();
+			}
 			return true;
 		default:
 			// ignore this event
