@@ -46,6 +46,11 @@ bool base64_is_valid(std::string const& s)
 	return true;
 }
 
+std::string base64_encode(const std::string &data)
+{
+	return base64_encode((unsigned char *)data.c_str(), data.size());
+}
+
 std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
 	std::string ret;
 	int i = 0;

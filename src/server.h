@@ -36,6 +36,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "serverenvironment.h"
 #include "clientiface.h"
 #include "chatmessage.h"
+#include "database.h"
+#include "database-dummy.h"
+#include "database-sqlite3.h"
+#include "database-files.h"
 #include <string>
 #include <list>
 #include <map>
@@ -210,7 +214,7 @@ public:
 	void fadeSound(s32 handle, float step, float gain);
 
 	// Envlock
-	std::set<std::string> getPlayerEffectivePrivs(const std::string &name);
+	std::unordered_set<std::string> getPlayerEffectivePrivs(const std::string &name);
 	bool checkPriv(const std::string &name, const std::string &priv);
 	void reportPrivsModified(const std::string &name=""); // ""=all
 	void reportInventoryFormspecModified(const std::string &name);
@@ -345,6 +349,12 @@ public:
 	bool leaveModChannel(const std::string &channel);
 	bool sendModChannelMessage(const std::string &channel, const std::string &message);
 	ModChannel *getModChannel(const std::string &channel);
+
+	inline void register_priv_grant_singleplayer(const std::string name)
+	{ m_priv_grant_to_singleplayer.insert(name); }
+
+	inline void register_priv_grant_admin(const std::string name)
+	{ m_priv_grant_to_admin.insert(name); }
 
 	// Bind address
 	Address m_bind_addr;
@@ -661,6 +671,9 @@ private:
 
 	// ModChannel manager
 	std::unique_ptr<ModChannelMgr> m_modchannel_mgr;
+
+	std::unordered_set<std::string> m_priv_grant_to_singleplayer;
+	std::unordered_set<std::string> m_priv_grant_to_admin;
 };
 
 /*

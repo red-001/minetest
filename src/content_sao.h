@@ -355,7 +355,7 @@ public:
 
 	// Other
 
-	void updatePrivileges(const std::set<std::string> &privs,
+	void updatePrivileges(const std::unordered_set<std::string> &privs,
 			bool is_singleplayer)
 	{
 		m_privs = privs;
@@ -366,7 +366,7 @@ public:
 	bool getSelectionBox(aabb3f *toset) const;
 	bool collideWithObjects() const { return true; }
 
-	void finalize(RemotePlayer *player, const std::set<std::string> &privs);
+	void finalize(RemotePlayer *player, const std::unordered_set<std::string> &privs);
 
 	v3f getEyePosition() const { return m_base_position + getEyeOffset(); }
 	v3f getEyeOffset() const;
@@ -398,7 +398,7 @@ private:
 	bool m_position_not_sent = false;
 
 	// Cached privileges for enforcement
-	std::set<std::string> m_privs;
+	std::unordered_set<std::string> m_privs;
 	bool m_is_singleplayer;
 
 	u16 m_breath = PLAYER_MAX_BREATH_DEFAULT;

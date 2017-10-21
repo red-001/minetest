@@ -122,6 +122,19 @@ std::string encode_srp_verifier(const std::string &verifier,
 bool decode_srp_verifier_and_salt(const std::string &encoded,
 	std::string *verifier, std::string *salt)
 {
+	std::string encoded_salt;
+	std::string encoded_verifier;
+	if (!split_srp_verifier_and_salt(encoded, &encoded_verifier, &encoded_salt))
+		return false;
+	*salt = base64_decode(encoded_salt);
+	*verifier = base64_decode(encoded_verifier);
+	return true;
+
+}
+
+bool split_srp_verifier_and_salt(const std::string &encoded,
+	std::string *verifier, std::string *salt)
+{
 	std::vector<std::string> components = str_split(encoded, '#');
 
 	if ((components.size() != 4)
@@ -130,8 +143,8 @@ bool decode_srp_verifier_and_salt(const std::string &encoded,
 			|| !base64_is_valid(components[3]))
 		return false;
 
-	*salt = base64_decode(components[2]);
-	*verifier = base64_decode(components[3]);
+	*salt = components[2];
+	*verifier = components[3];
 	return true;
 
 }

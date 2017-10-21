@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "common/c_converter.h"
 #include "common/c_content.h"
 #include "cpp_api/s_base.h"
+#include "cpp_api/s_server.h"
 #include "server.h"
 #include "environment.h"
 #include "remoteplayer.h"
@@ -102,7 +103,7 @@ int ModApiServer::l_get_player_privs(lua_State *L)
 	// Do it
 	lua_newtable(L);
 	int table = lua_gettop(L);
-	std::set<std::string> privs_s = server->getPlayerEffectivePrivs(name);
+	std::unordered_set<std::string> privs_s = server->getPlayerEffectivePrivs(name);
 	for (const std::string &privs_ : privs_s) {
 		lua_pushboolean(L, true);
 		lua_setfield(L, table, privs_.c_str());
@@ -505,6 +506,31 @@ int ModApiServer::l_set_last_run_mod(lua_State *L)
 	return 0;
 }
 
+// register_privilege_internal(name, give_singleplayer, give_admin)
+int ModApiServer::l_register_privilege_internal(lua_State *L)
+{
+	std::string name = luaL_checkstring(L, 1);
+	bool give_singleplayer = lua_toboolean(L, 2);
+	bool give_admin = lua_toboolean(L, 3);
+	if (give_singleplayer)
+		getServer(L)->register_priv_grant_singleplayer(name);
+	if (give_admin)
+		getServer(L)->register_priv_grant_admin(name);
+	return 0;
+}
+
+int ModApiServer::l_auth_reload(lua_State *L)
+{
+	ScriptApiServer *server_api = getScriptApi<ScriptApiServer>(L);
+	bool result = true;
+	if (server_api->hasAuthHandler())
+		result = server_api->reloadAuth();
+	else
+		getServer(L)->getEnv().getAuthDB()->reload();
+	lua_pushboolean(L, result);
+	return 1;
+}
+
 void ModApiServer::Initialize(lua_State *L, int top)
 {
 	API_FCT(request_shutdown);
@@ -539,4 +565,7 @@ void ModApiServer::Initialize(lua_State *L, int top)
 
 	API_FCT(get_last_run_mod);
 	API_FCT(set_last_run_mod);
+
+	API_FCT(register_privilege_internal);
+	API_FCT(auth_reload);
 }

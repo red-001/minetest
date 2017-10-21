@@ -1875,8 +1875,7 @@ void Server::SendPlayerPrivileges(session_t peer_id)
 	if(player->getPeerId() == PEER_ID_INEXISTENT)
 		return;
 
-	std::set<std::string> privs;
-	m_script->getAuth(player->getName(), NULL, &privs);
+	std::unordered_set<std::string> privs = getPlayerEffectivePrivs(player->getName());
 
 	NetworkPacket pkt(TOCLIENT_PRIVILEGES, 0, peer_id);
 	pkt << (u16) privs.size();
@@ -2912,16 +2911,27 @@ std::wstring Server::getStatusString()
 	return os.str();
 }
 
-std::set<std::string> Server::getPlayerEffectivePrivs(const std::string &name)
+std::unordered_set<std::string> Server::getPlayerEffectivePrivs(const std::string &name)
 {
-	std::set<std::string> privs;
-	m_script->getAuth(name, NULL, &privs);
+	std::unordered_set<std::string> privs;
+	if (m_script->hasAuthHandler()) {
+		m_script->getAuth(name, NULL, &privs);
+	} else {
+		AuthData *player_auth = m_env->getAuthDB()->getPlayerAuth(name);
+		if (player_auth)
+			privs = player_auth->player_privs;
+	}
+	if (isSingleplayer())
+		privs.insert(m_priv_grant_to_singleplayer.begin(),
+				m_priv_grant_to_singleplayer.end());
+	if (name == g_settings->get("name"))
+		privs.insert(m_priv_grant_to_admin.begin(), m_priv_grant_to_admin.end());
 	return privs;
 }
 
 bool Server::checkPriv(const std::string &name, const std::string &priv)
 {
-	std::set<std::string> privs = getPlayerEffectivePrivs(name);
+	std::unordered_set<std::string> privs = getPlayerEffectivePrivs(name);
 	return (privs.count(priv) != 0);
 }
 

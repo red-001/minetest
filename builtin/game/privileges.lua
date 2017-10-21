@@ -5,6 +5,8 @@
 --
 
 core.registered_privileges = {}
+local register_privilege_internal = core.register_privilege_internal
+core.register_privilege_internal = nil
 
 function core.register_privilege(name, param)
 	local function fill_defaults(def)
@@ -25,6 +27,7 @@ function core.register_privilege(name, param)
 		def = {description = param}
 	end
 	fill_defaults(def)
+	register_privilege_internal(name, def.give_to_singleplayer, def.give_to_admin)
 	core.registered_privileges[name] = def
 end
 

@@ -824,7 +824,7 @@ PlayerSAO::~PlayerSAO()
 		delete m_inventory;
 }
 
-void PlayerSAO::finalize(RemotePlayer *player, const std::set<std::string> &privs)
+void PlayerSAO::finalize(RemotePlayer *player, const std::unordered_set<std::string> &privs)
 {
 	assert(player);
 	m_player = player;

@@ -45,3 +45,8 @@ std::string encode_srp_verifier(const std::string &verifier,
 /// and salt components.
 bool decode_srp_verifier_and_salt(const std::string &encoded,
 	std::string *verifier, std::string *salt);
+
+/// Reads the DB-formatted SRP verifier and gets the base64
+/// encoded verifier and salt components.
+bool split_srp_verifier_and_salt(const std::string &encoded,
+	std::string *verifier, std::string *salt);

@@ -23,7 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 bool ScriptApiServer::getAuth(const std::string &playername,
 		std::string *dst_password,
-		std::set<std::string> *dst_privs)
+		std::unordered_set<std::string> *dst_privs)
 {
 	SCRIPTAPI_PRECHECKHEADER
 
@@ -65,10 +65,6 @@ void ScriptApiServer::getAuthHandler()
 
 	lua_getglobal(L, "core");
 	lua_getfield(L, -1, "registered_auth_handler");
-	if (lua_isnil(L, -1)){
-		lua_pop(L, 1);
-		lua_getfield(L, -1, "builtin_auth_handler");
-	}
 
 	setOriginFromTable(-1);
 
@@ -77,7 +73,19 @@ void ScriptApiServer::getAuthHandler()
 		throw LuaError("Authentication handler table not valid");
 }
 
-void ScriptApiServer::readPrivileges(int index, std::set<std::string> &result)
+bool ScriptApiServer::hasAuthHandler()
+{
+	lua_State *L = getStack();
+
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_auth_handler");
+
+	bool custom_auth_defined =  lua_istable(L, -1);
+	lua_pop(L, 2);
+	return custom_auth_defined;
+}
+
+void ScriptApiServer::readPrivileges(int index, std::unordered_set<std::string> &result)
 {
 	lua_State *L = getStack();
 
@@ -109,6 +117,57 @@ void ScriptApiServer::createAuth(const std::string &playername,
 		throw LuaError("Authentication handler missing create_auth");
 	lua_pushstring(L, playername.c_str());
 	lua_pushstring(L, password.c_str());
+	PCALL_RES(lua_pcall(L, 2, 0, error_handler));
+	lua_pop(L, 1); // Pop error handler
+}
+
+void ScriptApiServer::recordLogin(const std::string &playername)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	int error_handler = PUSH_ERROR_HANDLER(L);
+	getAuthHandler();
+	lua_getfield(L, -1, "record_login");
+	lua_remove(L, -2); // Remove auth handler
+	if (lua_type(L, -1) != LUA_TFUNCTION)
+		throw LuaError("Authentication handler missing record_login");
+	lua_pushstring(L, playername.c_str());
+	PCALL_RES(lua_pcall(L, 1, 1, error_handler));
+	lua_pop(L, 1); // Pop error handler
+}
+
+bool ScriptApiServer::reloadAuth()
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	int error_handler = PUSH_ERROR_HANDLER(L);
+	getAuthHandler();
+	lua_getfield(L, -1, "reload");
+	lua_remove(L, -2); // Remove auth handler
+	if (lua_type(L, -1) != LUA_TFUNCTION)
+		throw LuaError("Authentication handler missing reload");
+	PCALL_RES(lua_pcall(L, 2, 0, error_handler));
+	lua_pop(L, 1); // Pop error handler
+	return lua_toboolean(L, -1);
+}
+
+void ScriptApiServer::setPrivileges(const std::string &name, std::unordered_set<std::string> &privs)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	int error_handler = PUSH_ERROR_HANDLER(L);
+	getAuthHandler();
+	lua_getfield(L, -1, "set_privileges");
+	lua_remove(L, -2); // Remove auth handler
+	if (lua_type(L, -1) != LUA_TFUNCTION)
+		throw LuaError("Authentication handler missing set_privileges");
+	lua_pushstring(L, name.c_str());
+	lua_newtable(L);
+	for (std::string priv : privs) {
+		lua_pushstring(L, priv.c_str());
+		lua_pushboolean(L, true);
+		lua_settable(L, -3);
+	}
 	PCALL_RES(lua_pcall(L, 2, 0, error_handler));
 	lua_pop(L, 1); // Pop error handler
 }

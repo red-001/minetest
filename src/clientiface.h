@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "network/networkpacket.h"
 #include "network/networkprotocol.h"
 #include "porting.h"
+#include "database.h"
 
 #include <list>
 #include <vector>
@@ -234,7 +235,9 @@ public:
 	u16 net_proto_version = 0;
 
 	/* Authentication information */
-	std::string enc_pwd = "";
+	std::string db_password_hash;
+	std::string db_password_salt;
+
 	bool create_player_on_auth_success = false;
 	AuthMechanism chosen_mech  = AUTH_MECHANISM_NONE;
 	void *auth_data = nullptr;

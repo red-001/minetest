@@ -29,6 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <iomanip>
 #include <cctype>
 #include <unordered_map>
+#include <unordered_set>
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -252,6 +253,24 @@ inline bool str_ends_with(const std::basic_string<T> &str,
 			case_insensitive);
 }
 
+/**
+ * @param str
+ * @return A copy of \p str with leading and trailing whitespace removed.
+ */
+inline std::string trim(const std::string &str)
+{
+	size_t front = 0;
+
+	while (std::isspace(str[front]))
+		++front;
+
+	size_t back = str.size();
+	while (back > front && std::isspace(str[back - 1]))
+		--back;
+
+	return str.substr(front, back - front);
+}
+
 
 /**
  * Splits a string into its component parts separated by the character
@@ -274,6 +293,35 @@ inline std::vector<std::basic_string<T> > str_split(
 	return parts;
 }
 
+template <typename T>
+inline std::unordered_set<std::basic_string<T> > str_split_set(
+		const std::basic_string<T> &str,
+		T delimiter)
+{
+	std::unordered_set<std::basic_string<T> > parts;
+	std::basic_stringstream<T> sstr(str);
+	std::basic_string<T> part;
+
+	while (std::getline(sstr, part, delimiter))
+		parts.insert(trim(part));
+
+	return parts;
+}
+
+template <typename T>
+inline std::basic_string<T> str_concat_set(
+		const std::unordered_set<std::basic_string<T> > &set,
+		T delimiter)
+{
+	std::basic_string<T> str;
+	for (auto line : set)
+		str = str + line + delimiter;
+	if (str.size() > 0)
+		str.pop_back();
+	return str;
+}
+
+
 
 /**
  * @param str
@@ -290,26 +338,6 @@ inline std::string lowercase(const std::string &str)
 
 	return s2;
 }
-
-
-/**
- * @param str
- * @return A copy of \p str with leading and trailing whitespace removed.
- */
-inline std::string trim(const std::string &str)
-{
-	size_t front = 0;
-
-	while (std::isspace(str[front]))
-		++front;
-
-	size_t back = str.size();
-	while (back > front && std::isspace(str[back - 1]))
-		--back;
-
-	return str.substr(front, back - front);
-}
-
 
 /**
  * Returns whether \p str should be regarded as (bool) true.  Case and leading

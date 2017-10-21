@@ -57,3 +57,8 @@ void Database_Dummy::listAllLoadableBlocks(std::vector<v3s16> &dst)
 	}
 }
 
+std::unordered_set<std::string> Database_Dummy::listPlayers() {
+	std::unordered_set<std::string> dummy_player_list;
+	return dummy_player_list;
+}
+

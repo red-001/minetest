@@ -24,7 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "database.h"
 #include "irrlichttypes.h"
 
-class Database_Dummy : public MapDatabase, public PlayerDatabase
+class Database_Dummy : public MapDatabase, public PlayerDatabase, public AuthDatabase
 {
 public:
 	bool saveBlock(const v3s16 &pos, const std::string &data);
@@ -36,6 +36,14 @@ public:
 	bool loadPlayer(RemotePlayer *player, PlayerSAO *sao) { return true; }
 	bool removePlayer(const std::string &name) { return true; }
 	void listPlayers(std::vector<std::string> &res) {}
+
+	AuthData* getPlayerAuth(const std::string &player_name) {return nullptr;}
+	void createPlayerAuth(const std::string &name, const std::string &hash,
+			const std::string &salt) {}
+	void record_login(const std::string player_name) {};
+	void reload() {};
+	bool playerAuthUpdated(const std::string &player_name) { return true; }
+	std::unordered_set<std::string> listPlayers();
 
 	void beginSave() {}
 	void endSave() {}

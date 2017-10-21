@@ -214,48 +214,75 @@ void Server::handleCommand_Init(NetworkPacket* pkt)
 	/*
 		Compose auth methods for answer
 	*/
-	std::string encpwd; // encrypted Password field for the user
-	bool has_auth = m_script->getAuth(playername, &encpwd, NULL);
+	bool has_auth;
 	u32 auth_mechs = 0;
-
 	client->chosen_mech = AUTH_MECHANISM_NONE;
-
-	if (has_auth) {
-		std::vector<std::string> pwd_components = str_split(encpwd, '#');
-		if (pwd_components.size() == 4) {
-			if (pwd_components[1] == "1") { // 1 means srp
-				auth_mechs |= AUTH_MECHANISM_SRP;
-				client->enc_pwd = encpwd;
+	if (m_script->hasAuthHandler()) {
+		std::string encpwd; // encrypted Password field for the user
+		has_auth = m_script->getAuth(playername, &encpwd, NULL);
+		if (has_auth) {
+			std::vector<std::string> pwd_components = str_split(encpwd, '#');
+			if (pwd_components.size() == 4) {
+				if (pwd_components[1] == "1") { // 1 means srp
+					auth_mechs |= AUTH_MECHANISM_SRP;
+					if (!decode_srp_verifier_and_salt(encpwd,
+								&client->db_password_hash, &client->db_password_salt)) {
+							actionstream << "Server: User " << client->getName()
+									<< " tried to log in, but srp verifier field"
+									<< " was invalid (most likely invalid base64)." << std::endl;
+							DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_SERVER_FAIL);
+							return;
+						}
+				} else {
+					actionstream << "User " << playername
+							<< " tried to log in, but password field"
+							<< " was invalid (unknown mechcode)." << std::endl;
+					DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_SERVER_FAIL);
+					return;
+				}
+			} else if (base64_is_valid(encpwd)) {
+				auth_mechs |= AUTH_MECHANISM_LEGACY_PASSWORD;
+				client->db_password_hash = base64_decode(encpwd);
 			} else {
 				actionstream << "User " << playername
-					<< " tried to log in, but password field"
-					<< " was invalid (unknown mechcode)." << std::endl;
+						<< " tried to log in, but password field"
+						<< " was invalid (invalid base64)." << std::endl;
 				DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_SERVER_FAIL);
 				return;
 			}
-		} else if (base64_is_valid(encpwd)) {
+		}
+	} else {
+		AuthData *player_auth = m_env->getAuthDB()->getPlayerAuth(playerName);
+		has_auth = player_auth != nullptr;
+		if (has_auth && player_auth->is_srp) {
+			auth_mechs |= AUTH_MECHANISM_SRP;
+			client->db_password_hash = base64_decode(player_auth->password_hash);
+			client->db_password_salt = base64_decode(player_auth->password_salt);
+		} else if (has_auth && base64_is_valid(player_auth->password_hash)) {
 			auth_mechs |= AUTH_MECHANISM_LEGACY_PASSWORD;
-			client->enc_pwd = encpwd;
-		} else {
+			client->db_password_hash = base64_decode(player_auth->password_hash);
+		} else  if (has_auth) {
 			actionstream << "User " << playername
-				<< " tried to log in, but password field"
-				<< " was invalid (invalid base64)." << std::endl;
+					<< " tried to log in, but Auth DB returned"
+					<< " invalid data." << std::endl;
 			DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_SERVER_FAIL);
 			return;
 		}
-	} else {
+	}
+
+	if (!has_auth){
 		std::string default_password = g_settings->get("default_password");
 		if (default_password.length() == 0) {
 			auth_mechs |= AUTH_MECHANISM_FIRST_SRP;
 		} else {
 			// Take care of default passwords.
-			client->enc_pwd = get_encoded_srp_verifier(playerName, default_password);
+			generate_srp_verifier_and_salt(playerName, default_password,
+					&client->db_password_hash, &client->db_password_salt);
 			auth_mechs |= AUTH_MECHANISM_SRP;
 			// Allocate player in db, but only on successful login.
-			client->create_player_on_auth_success = true;
+		client->create_player_on_auth_success = true;
 		}
 	}
-
 	/*
 		Answer with a TOCLIENT_HELLO
 	*/
@@ -393,13 +420,21 @@ void Server::handleCommand_ClientReady(NetworkPacket* pkt)
 	}
 	m_clients.send(peer_id, 0, &list_pkt, true);
 
+	std::string player_name = playersao->getPlayer()->getName();
+
 	NetworkPacket notice_pkt(TOCLIENT_UPDATE_PLAYER_LIST, 0, PEER_ID_INEXISTENT);
 	// (u16) 1 + std::string represents a pseudo vector serialization representation
-	notice_pkt << (u8) PLAYER_LIST_ADD << (u16) 1 << std::string(playersao->getPlayer()->getName());
+	notice_pkt << (u8) PLAYER_LIST_ADD << (u16) 1 << player_name;
 	m_clients.sendToAll(&notice_pkt);
 
 	m_clients.event(peer_id, CSE_SetClientReady);
 	m_script->on_joinplayer(playersao);
+
+	if (m_script->hasAuthHandler())
+		m_script->recordLogin(player_name);
+	else
+		m_env->getAuthDB()->record_login(player_name);
+
 	// Send shutdown timer if shutdown has been scheduled
 	if (m_shutdown_timer > 0.0f) {
 		std::wstringstream ws;
@@ -1515,11 +1550,19 @@ void Server::handleCommand_FirstSrp(NetworkPacket* pkt)
 			DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_EMPTY_PASSWORD);
 			return;
 		}
-
-		std::string initial_ver_key;
-
-		initial_ver_key = encode_srp_verifier(verification_key, salt);
-		m_script->createAuth(playername, initial_ver_key);
+		auto privs = str_split_set(g_settings->get("default_privs"), ',');
+		if (m_script->hasAuthHandler()) {
+			std::string initial_ver_key = encode_srp_verifier(verification_key, salt);
+			m_script->createAuth(playername, initial_ver_key);
+			m_script->setPrivileges(playername, privs);
+		} else {
+			AuthDatabase *auth_db = m_env->getAuthDB();
+			auth_db->createPlayerAuth(playername, verification_key, salt);
+			AuthData *player_auth = auth_db->getPlayerAuth(playername);
+			if (player_auth)
+				player_auth->player_privs = privs;
+			auth_db->playerAuthUpdated(playername);
+		}
 
 		acceptAuth(pkt->getPeerId(), false);
 	} else {
@@ -1530,8 +1573,19 @@ void Server::handleCommand_FirstSrp(NetworkPacket* pkt)
 			return;
 		}
 		m_clients.event(pkt->getPeerId(), CSE_SudoLeave);
-		std::string pw_db_field = encode_srp_verifier(verification_key, salt);
-		bool success = m_script->setPassword(playername, pw_db_field);
+		bool success = false;
+		if (m_script->hasAuthHandler()) {
+			std::string pw_db_field = encode_srp_verifier(verification_key, salt);
+			success = m_script->setPassword(playername, pw_db_field);
+		} else {
+			AuthData *player_auth = m_env->getAuthDB()->getPlayerAuth(playername);
+			if (player_auth) {
+				player_auth->is_srp = true;
+				player_auth->password_hash = verification_key;
+				player_auth->password_salt = salt;
+				success = m_env->getAuthDB()->playerAuthUpdated(playername);
+			}
+		}
 		if (success) {
 			actionstream << playername << " changes password" << std::endl;
 			SendChatMessage(pkt->getPeerId(), ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
@@ -1606,20 +1660,13 @@ void Server::handleCommand_SrpBytesA(NetworkPacket* pkt)
 
 	client->chosen_mech = chosen;
 
-	std::string salt;
-	std::string verifier;
+	std::string salt     = client->db_password_salt;
+	std::string verifier = client->db_password_hash;
 
 	if (based_on == 0) {
 
-		generate_srp_verifier_and_salt(client->getName(), client->enc_pwd,
+		generate_srp_verifier_and_salt(client->getName(), client->db_password_salt,
 			&verifier, &salt);
-	} else if (!decode_srp_verifier_and_salt(client->enc_pwd, &verifier, &salt)) {
-		// Non-base64 errors should have been catched in the init handler
-		actionstream << "Server: User " << client->getName()
-			<< " tried to log in, but srp verifier field"
-			<< " was invalid (most likely invalid base64)." << std::endl;
-		DenyAccess(pkt->getPeerId(), SERVER_ACCESSDENIED_SERVER_FAIL);
-		return;
 	}
 
 	char *bytes_B = 0;
@@ -1720,7 +1767,9 @@ void Server::handleCommand_SrpBytesM(NetworkPacket* pkt)
 
 	if (client->create_player_on_auth_success) {
 		std::string playername = client->getName();
-		m_script->createAuth(playername, client->enc_pwd);
+		std::string enc_pwd = encode_srp_verifier(client->db_password_hash,
+			client->db_password_salt);
+		m_script->createAuth(playername, enc_pwd);
 
 		std::string checkpwd; // not used, but needed for passing something
 		if (!m_script->getAuth(playername, &checkpwd, NULL)) {

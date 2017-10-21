@@ -37,9 +37,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "threading/mutex_auto_lock.h"
 #include "filesys.h"
 #include "gameparams.h"
-#include "database-dummy.h"
-#include "database-files.h"
-#include "database-sqlite3.h"
 #if USE_POSTGRESQL
 #include "database-postgresql.h"
 #endif
@@ -368,6 +365,17 @@ ServerEnvironment::ServerEnvironment(ServerMap *map,
 	std::string name;
 	conf.getNoEx("player_backend", name);
 	m_player_database = openPlayerDatabase(name, path_world, conf);
+
+	std::string auth_db_name = "files";
+	if (conf.exists("auth_backend"))
+		conf.getNoEx("auth_backend", auth_db_name);
+	if (auth_db_name == "files") {
+		warningstream << "/!\\ You are using old player Auth backend. "
+				<< "This backend is deprecated and will be removed in next release /!\\"
+				<< std::endl << "Switching to SQLite3 is advised, "
+				<< "please read http://wiki.minetest.net/Database_backends." << std::endl;
+	}
+	m_auth_database = CreateAuthDB(auth_db_name, path_world);
 }
 
 ServerEnvironment::~ServerEnvironment()
@@ -393,6 +401,7 @@ ServerEnvironment::~ServerEnvironment()
 	}
 
 	delete m_player_database;
+	delete m_auth_database;
 }
 
 Map & ServerEnvironment::getMap()
@@ -2094,6 +2103,18 @@ PlayerDatabase *ServerEnvironment::openPlayerDatabase(const std::string &name,
 	throw BaseException(std::string("Database backend ") + name + " not supported.");
 }
 
+AuthDatabase *ServerEnvironment::CreateAuthDB(std::string name, std::string savedir)
+{
+	if (name == "sqlite3")
+		return new AuthDatabaseSQLite3(savedir);
+	if (name == "dummy")
+		return new Database_Dummy();
+	if (name == "files")
+		return new AuthDatabaseFiles(savedir);
+
+	throw BaseException(std::string("Database backend ") + name + " not supported.");
+}
+
 bool ServerEnvironment::migratePlayersDatabase(const GameParams &game_params,
 		const Settings &cmd_args)
 {
@@ -2144,7 +2165,7 @@ bool ServerEnvironment::migratePlayersDatabase(const GameParams &game_params,
 
 			srcdb->loadPlayer(&player, &playerSAO);
 
-			playerSAO.finalize(&player, std::set<std::string>());
+			playerSAO.finalize(&player, std::unordered_set<std::string>());
 			player.setPlayerSAO(&playerSAO);
 
 			dstdb->savePlayer(&player);

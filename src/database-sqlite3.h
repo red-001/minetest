@@ -191,3 +191,33 @@ private:
 	sqlite3_stmt *m_stmt_player_metadata_remove = nullptr;
 	sqlite3_stmt *m_stmt_player_metadata_add = nullptr;
 };
+
+class AuthDatabaseSQLite3 : private Database_SQLite3, public AuthDatabase
+{
+public:
+	AuthDatabaseSQLite3(const std::string &savedir);
+	virtual ~AuthDatabaseSQLite3();
+
+	AuthData* getPlayerAuth(const std::string &player_name) {return nullptr;}
+	void createPlayerAuth(const std::string &name, const std::string &hash, const std::string &salt) {}
+	bool removePlayer(const std::string &name) {return true;}
+	void record_login(const std::string player_name) {};
+	void reload() {};
+	bool playerAuthUpdated(const std::string &player_name) {return true;}
+	std::unordered_set<std::string> listPlayers() {
+		std::unordered_set<std::string> dummy_player_list;
+		return dummy_player_list;
+	}
+
+protected:
+	virtual void createDatabase();
+	virtual void initStatements();
+
+private:
+
+	// Map
+	sqlite3_stmt *m_stmt_read = nullptr;
+	sqlite3_stmt *m_stmt_write = nullptr;
+	sqlite3_stmt *m_stmt_list = nullptr;
+	sqlite3_stmt *m_stmt_delete = nullptr;
+};

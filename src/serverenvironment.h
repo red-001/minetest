@@ -24,6 +24,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mapnode.h"
 #include "settings.h"
 #include "util/numeric.h"
+#include "database.h"
+#include "database-dummy.h"
+#include "database-files.h"
+#include "database-sqlite3.h"
 #include <set>
 
 class IGameDef;
@@ -347,10 +351,14 @@ public:
 
 	static bool migratePlayersDatabase(const GameParams &game_params,
 			const Settings &cmd_args);
+
+	AuthDatabase *getAuthDB() { return m_auth_database; }
 private:
 
 	static PlayerDatabase *openPlayerDatabase(const std::string &name,
 			const std::string &savedir, const Settings &conf);
+
+	static AuthDatabase *CreateAuthDB(std::string name, std::string savedir);
 	/*
 		Internal ActiveObject interface
 		-------------------------------------------
@@ -443,6 +451,7 @@ private:
 	std::vector<RemotePlayer*> m_players;
 
 	PlayerDatabase *m_player_database = nullptr;
+	AuthDatabase *m_auth_database = nullptr;
 
 	// Particles
 	IntervalLimiter m_particle_management_interval;

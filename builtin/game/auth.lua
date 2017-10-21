@@ -56,7 +56,7 @@ end
 
 read_auth_file()
 
-core.builtin_auth_handler = {
+core.registered_auth_handlers = {
 	get_auth = function(name)
 		assert(type(name) == "string")
 		-- Figure out what password to use for a new player (singleplayer
@@ -66,27 +66,6 @@ core.builtin_auth_handler = {
 		-- If not in authentication table, return nil
 		if not core.auth_table[name] then
 			return nil
-		end
-		-- Figure out what privileges the player should have.
-		-- Take a copy of the privilege table
-		local privileges = {}
-		for priv, _ in pairs(core.auth_table[name].privileges) do
-			privileges[priv] = true
-		end
-		-- If singleplayer, give all privileges except those marked as give_to_singleplayer = false
-		if core.is_singleplayer() then
-			for priv, def in pairs(core.registered_privileges) do
-				if def.give_to_singleplayer then
-					privileges[priv] = true
-				end
-			end
-		-- For the admin, give everything
-		elseif name == core.settings:get("name") then
-			for priv, def in pairs(core.registered_privileges) do
-				if def.give_to_admin then
-					privileges[priv] = true
-				end
-			end
 		end
 		-- All done
 		return {
@@ -102,7 +81,7 @@ core.builtin_auth_handler = {
 		core.log('info', "Built-in authentication handler adding player '"..name.."'")
 		core.auth_table[name] = {
 			password = password,
-			privileges = core.string_to_privs(core.settings:get("default_privs")),
+			privileges = {},
 			last_login = os.time(),
 		}
 		save_auth_file()
@@ -120,6 +99,8 @@ core.builtin_auth_handler = {
 		return true
 	end,
 	set_privileges = function(name, privileges)
+		print(dump(name))
+		print(dump(privileges))
 		assert(type(name) == "string")
 		assert(type(privileges) == "table")
 		if not core.auth_table[name] then
@@ -182,14 +163,6 @@ end
 
 core.set_player_password = auth_pass("set_password")
 core.set_player_privs    = auth_pass("set_privileges")
-core.auth_reload         = auth_pass("reload")
-
-
-local record_login = auth_pass("record_login")
-
-core.register_on_joinplayer(function(player)
-	record_login(player:get_player_name())
-end)
 
 core.register_on_prejoinplayer(function(name, ip)
 	local auth = core.auth_table

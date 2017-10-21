@@ -20,7 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include "cpp_api/s_base.h"
-#include <set>
+#include <unordered_set>
 
 class ScriptApiServer
 		: virtual public ScriptApiBase
@@ -34,14 +34,19 @@ public:
 	void on_shutdown();
 
 	/* auth */
+	bool hasAuthHandler();
 	bool getAuth(const std::string &playername,
 			std::string *dst_password,
-			std::set<std::string> *dst_privs);
+			std::unordered_set<std::string> *dst_privs);
 	void createAuth(const std::string &playername,
 			const std::string &password);
 	bool setPassword(const std::string &playername,
 			const std::string &password);
+	void recordLogin(const std::string &playername);
+	bool reloadAuth();
+	void setPrivileges(const std::string &name,
+			std::unordered_set<std::string> &privs);
 private:
 	void getAuthHandler();
-	void readPrivileges(int index, std::set<std::string> &result);
+	void readPrivileges(int index, std::unordered_set<std::string> &result);
 };

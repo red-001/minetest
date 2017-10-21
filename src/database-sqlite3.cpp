@@ -604,3 +604,51 @@ void PlayerDatabaseSQLite3::listPlayers(std::vector<std::string> &res)
 
 	sqlite3_reset(m_stmt_player_list);
 }
+
+/*
+ * Auth database
+*/
+
+AuthDatabaseSQLite3::AuthDatabaseSQLite3(const std::string &savedir):
+	Database_SQLite3(savedir, "auth")
+	//MapDatabase()
+{
+}
+
+AuthDatabaseSQLite3::~AuthDatabaseSQLite3()
+{
+	FINALIZE_STATEMENT(m_stmt_read)
+	FINALIZE_STATEMENT(m_stmt_write)
+	FINALIZE_STATEMENT(m_stmt_list)
+	FINALIZE_STATEMENT(m_stmt_delete)
+}
+
+
+void AuthDatabaseSQLite3::createDatabase()
+{
+	assert(m_database); // Pre-condition
+
+	SQLOK(sqlite3_exec(m_database,
+			"CREATE TABLE IF NOT EXISTS `auth` ("
+					"`name` VARCHAR(50) NOT NULL,"
+					"`password_data` VARCHAR(368) NOT NULL,"
+					"`creation_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+					"`modification_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+					"PRIMARY KEY (`name`));",
+		NULL, NULL, NULL),
+		"Failed to create database table");
+}
+
+void AuthDatabaseSQLite3::initStatements()
+{
+	PREPARE_STATEMENT(read, "SELECT `data` FROM `blocks` WHERE `pos` = ? LIMIT 1");
+#ifdef __ANDROID__
+	PREPARE_STATEMENT(write,  "INSERT INTO `blocks` (`pos`, `data`) VALUES (?, ?)");
+#else
+	PREPARE_STATEMENT(write, "REPLACE INTO `blocks` (`pos`, `data`) VALUES (?, ?)");
+#endif
+	PREPARE_STATEMENT(delete, "DELETE FROM `blocks` WHERE `pos` = ?");
+	PREPARE_STATEMENT(list, "SELECT `pos` FROM `blocks`");
+
+	verbosestream << "ServerMap: SQLite3 database opened." << std::endl;
+}

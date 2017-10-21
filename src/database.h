@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include "irr_v3d.h"
 #include "irrlichttypes.h"
 #include "util/basic_macros.h"
@@ -60,4 +61,28 @@ public:
 	virtual bool loadPlayer(RemotePlayer *player, PlayerSAO *sao) = 0;
 	virtual bool removePlayer(const std::string &name) = 0;
 	virtual void listPlayers(std::vector<std::string> &res) = 0;
+};
+
+struct AuthData
+{
+	bool is_srp;
+	std::string password_hash;
+	std::string password_salt;
+	std::unordered_set<std::string> player_privs;
+	time_t user_last_login = 0;
+};
+
+class AuthDatabase
+{
+public:
+	virtual ~AuthDatabase() = default;
+
+	virtual AuthData* getPlayerAuth(const std::string &player_name) = 0;
+	virtual void createPlayerAuth(const std::string &name, const std::string &hash,
+			const std::string &salt) = 0;
+	virtual bool playerAuthUpdated(const std::string &player_name) = 0;
+	virtual void record_login(const std::string player_name) = 0;
+	virtual void reload() = 0;
+	virtual bool removePlayer(const std::string &name) = 0;
+	virtual std::unordered_set<std::string> listPlayers() = 0;
 };

@@ -22,7 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 // !!! WARNING !!!
 // This backend is intended to be used on Minetest 0.4.16 only for the transition backend
 // for player files
-
+#include <unordered_map>
 #include "database.h"
 
 class PlayerDatabaseFiles : public PlayerDatabase
@@ -40,4 +40,24 @@ private:
 	void serialize(std::ostringstream &os, RemotePlayer *player);
 
 	std::string m_savedir;
+};
+
+class AuthDatabaseFiles : public AuthDatabase
+{
+public:
+	AuthDatabaseFiles(const std::string &savedir);
+
+	AuthData* getPlayerAuth(const std::string &player_name);
+	void createPlayerAuth(const std::string &name, const std::string &hash,
+			const std::string &salt);
+	bool playerAuthUpdated(const std::string &player_name);
+	void record_login(const std::string player_name);
+	void reload();
+	bool removePlayer(const std::string &name);
+	std::unordered_set<std::string> listPlayers();
+private:
+	void loadDatabase();
+	void saveDatabase();
+	std::string m_savedir;
+	std::unordered_map<std::string, AuthData> m_auth_data;
 };

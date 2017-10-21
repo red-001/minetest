@@ -106,6 +106,12 @@ private:
 	// set_last_run_mod(modname)
 	static int l_set_last_run_mod(lua_State *L);
 
+	// register_privilege_internal(name, give_singleplayer, give_admin)
+	static int l_register_privilege_internal(lua_State *L);
+
+	// auth_reload()
+	static int l_auth_reload(lua_State *L);
+
 public:
 	static void Initialize(lua_State *L, int top);
 };
