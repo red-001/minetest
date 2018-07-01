@@ -1548,7 +1548,7 @@ void Server::SendChatMessage(session_t peer_id, const ChatMessage &message)
 	NetworkPacket pkt(TOCLIENT_CHAT_MESSAGE, 0, peer_id);
 	u8 version = 1;
 	u8 type = message.type;
-	pkt << version << type << std::wstring(L"") << message.message << message.timestamp;
+	pkt << version << type << message.sender << message.text << message.timestamp;
 
 	if (peer_id != PEER_ID_INEXISTENT) {
 		RemotePlayer *player = m_env->getPlayer(peer_id);
@@ -2792,48 +2792,27 @@ std::wstring Server::handleChat(const std::string &name, const std::wstring &wna
 	if (m_script->on_chat_message(name, wide_to_utf8(wmessage)))
 		return L"";
 
-	// Line to send
-	std::wstring line;
-	// Whether to send line to the player that sent the message, or to all players
-	bool broadcast_line = true;
-
 	if (check_shout_priv && !checkPriv(name, "shout")) {
-		line += L"-!- You don't have permission to shout.";
-		broadcast_line = false;
-	} else {
-		line += L"<";
-		line += wname;
-		line += L"> ";
-		line += wmessage;
+		return L"-!- You don't have permission to shout.";
 	}
 
 	/*
-		Tell calling method to send the message to sender
+		Log chat
 	*/
-	if (!broadcast_line)
-		return line;
+
+	std::wstring log_message = unescape_enriched(L"<" + wname + L"> " + wmessage);
+	actionstream << "CHAT: " << wide_to_narrow(log_message) << std::endl;
 
 	/*
 		Send the message to others
 	*/
-	actionstream << "CHAT: " << wide_to_narrow(unescape_enriched(line)) << std::endl;
+
 
 	std::vector<session_t> clients = m_clients.getClientIDs();
-
-	/*
-		Send the message back to the inital sender
-		if they are using protocol version >= 29
-	*/
-
-	session_t peer_id_to_avoid_sending =
-		(player ? player->getPeerId() : PEER_ID_INEXISTENT);
-
-	if (player && player->protocol_version >= 29)
-		peer_id_to_avoid_sending = PEER_ID_INEXISTENT;
+	ChatMessage message = ChatMessage(CHATMESSAGE_TYPE_NORMAL, wmessage, wname);
 
 	for (u16 cid : clients) {
-		if (cid != peer_id_to_avoid_sending)
-			SendChatMessage(cid, ChatMessage(line));
+		SendChatMessage(cid, message);
 	}
 	return L"";
 }

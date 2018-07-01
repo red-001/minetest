@@ -480,7 +480,7 @@ private:
 	std::wstring handleChat(const std::string &name, const std::wstring &wname,
 		std::wstring wmessage_input,
 		bool check_shout_priv = false,
-		RemotePlayer *player = NULL);
+		RemotePlayer *player = nullptr);
 	void handleAdminChat(const ChatEventChat *evt);
 
 	// When called, connection mutex should be locked

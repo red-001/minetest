@@ -69,7 +69,6 @@ int ModApiClient::l_set_last_run_mod(lua_State *L)
 // print(text)
 int ModApiClient::l_print(lua_State *L)
 {
-	NO_MAP_LOCK_REQUIRED;
 	std::string text = luaL_checkstring(L, 1);
 	rawstream << text << std::endl;
 	return 0;
@@ -78,11 +77,8 @@ int ModApiClient::l_print(lua_State *L)
 // display_chat_message(message)
 int ModApiClient::l_display_chat_message(lua_State *L)
 {
-	if (!lua_isstring(L, 1))
-		return 0;
-
-	std::string message = luaL_checkstring(L, 1);
-	getClient(L)->pushToChatQueue(new ChatMessage(utf8_to_wide(message)));
+	ChatMessage msg = read_chat_message(L, 1);
+	getClient(L)->pushToChatQueue(new ChatMessage(msg));
 	lua_pushboolean(L, true);
 	return 1;
 }

@@ -451,6 +451,18 @@ size_t read_stringlist(lua_State *L, int index, std::vector<std::string> *result
 */
 
 bool getstringfield(lua_State *L, int table,
+		const char *fieldname, std::wstring &result)
+{
+	std::string narrow_result;
+	if (getstringfield(L, table, fieldname, narrow_result))
+	{
+		result = utf8_to_wide(narrow_result);
+		return true;
+	}
+	return false;
+}
+
+bool getstringfield(lua_State *L, int table,
 		const char *fieldname, std::string &result)
 {
 	lua_getfield(L, table, fieldname);
@@ -519,6 +531,14 @@ std::string getstringfield_default(lua_State *L, int table,
 		const char *fieldname, const std::string &default_)
 {
 	std::string result = default_;
+	getstringfield(L, table, fieldname, result);
+	return result;
+}
+
+std::wstring getstringfield_default(lua_State *L, int table,
+		const char *fieldname, const std::wstring &default_)
+{
+	std::wstring result = default_;
 	getstringfield(L, table, fieldname, result);
 	return result;
 }

@@ -62,6 +62,7 @@ struct HitParams;
 struct EnumString;
 struct NoiseParams;
 class Schematic;
+struct ChatMessage;
 
 
 ContentFeatures    read_content_features     (lua_State *L, int index);
@@ -166,6 +167,10 @@ bool               string_to_enum            (const EnumString *spec,
                                               int &result,
                                               const std::string &str);
 
+bool               enum_to_string            (const EnumString *spec,
+                                              const int enum_num,
+                                              std::string &enum_string);
+
 bool               read_noiseparams          (lua_State *L, int index,
                                               NoiseParams *np);
 void               push_noiseparams          (lua_State *L, NoiseParams *np);
@@ -187,5 +192,9 @@ void               read_hud_element          (lua_State *L, HudElement *elem);
 void               push_hud_element          (lua_State *L, HudElement *elem);
 
 HudElementStat     read_hud_change           (lua_State *L, HudElement *elem, void **value);
+
+void               push_chat_message         (lua_State *L, const ChatMessage &msg);
+
+ChatMessage        read_chat_message         (lua_State *L, int index);
 
 extern struct EnumString es_TileAnimationType[];

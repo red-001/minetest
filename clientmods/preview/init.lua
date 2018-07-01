@@ -1,4 +1,5 @@
 local modname = core.get_current_modname() or "??"
+local modname = core.get_current_modname() or "??"
 local modstorage = core.get_mod_storage()
 local mod_channel
 
@@ -70,7 +71,7 @@ end)
 
 -- This is an example function to ensure it's working properly, should be removed before merge
 core.register_on_receiving_chat_message(function(message)
-	print("[PREVIEW] Received message " .. message)
+	print("[PREVIEW] Received message " .. dump(message))
 	return false
 end)
 

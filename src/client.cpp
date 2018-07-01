@@ -1468,13 +1468,13 @@ bool Client::getChatMessage(std::wstring &res)
 		case CHATMESSAGE_TYPE_RAW:
 		case CHATMESSAGE_TYPE_ANNOUNCE:
 		case CHATMESSAGE_TYPE_SYSTEM:
-			res = chatMessage->message;
+			res = chatMessage->text;
 			break;
 		case CHATMESSAGE_TYPE_NORMAL: {
 			if (!chatMessage->sender.empty())
-				res = L"<" + chatMessage->sender + L"> " + chatMessage->message;
+				res = L"<" + chatMessage->sender + L"> " + chatMessage->text;
 			else
-				res = chatMessage->message;
+				res = chatMessage->text;
 			break;
 		}
 		default:
