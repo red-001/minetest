@@ -22,7 +22,7 @@ CImage::CImage(ECOLOR_FORMAT format, const core::dimension2d<u32> &size, void *d
 	if (ownForeignMemory) {
 		Data = (u8 *)data;
 	} else {
-		const u32 dataSize = getDataSizeFromFormat(Format, Size.Width, Size.Height);
+		const u32 dataSize = getDataSizeFromFormat(Format, Size);
 		const u32 allocSize = align_next(dataSize, 16);
 
 		// allocate as u32 to ensure enough alignment when casted
@@ -36,7 +36,7 @@ CImage::CImage(ECOLOR_FORMAT format, const core::dimension2d<u32> &size, void *d
 CImage::CImage(ECOLOR_FORMAT format, const core::dimension2d<u32> &size) :
 		IImage(format, size, true)
 {
-	const u32 dataSize = getDataSizeFromFormat(Format, Size.Width, Size.Height);
+	const u32 dataSize = getDataSizeFromFormat(Format, Size);
 	const u32 allocSize = align_next(dataSize, 16);
 
 	Data = reinterpret_cast<u8 *>(new u32[allocSize / 4]);

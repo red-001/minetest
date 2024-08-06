@@ -22,6 +22,8 @@ namespace irr
 namespace video
 {
 
+#if !ENABLE_PROCESS_MEDIA_IN_RUST
+
 //! creates a loader which is able to load windows bitmaps
 IImageLoader *createImageLoaderBMP();
 
@@ -34,11 +36,19 @@ IImageLoader *createImageLoaderTGA();
 //! creates a loader which is able to load png images
 IImageLoader *createImageLoaderPNG();
 
+#else
+
+//! creates a loader which is able to load BMP, JPEG, TGA and PNG files
+IImageLoader* createImageLoaderRust();
+
+#endif
+
 //! creates a writer which is able to save jpg images
 IImageWriter *createImageWriterJPG();
 
 //! creates a writer which is able to save png images
 IImageWriter *createImageWriterPNG();
+
 
 namespace
 {
@@ -91,10 +101,14 @@ CNullDriver::CNullDriver(io::IFileSystem *io, const core::dimension2d<u32> &scre
 		FileSystem->grab();
 
 	// create surface loaders and writers
+#if ENABLE_PROCESS_MEDIA_IN_RUST
+	SurfaceLoader.push_back(video::createImageLoaderRust());
+#else
 	SurfaceLoader.push_back(video::createImageLoaderTGA());
 	SurfaceLoader.push_back(video::createImageLoaderPNG());
 	SurfaceLoader.push_back(video::createImageLoaderJPG());
 	SurfaceLoader.push_back(video::createImageLoaderBMP());
+#endif
 
 	SurfaceWriter.push_back(video::createImageWriterJPG());
 	SurfaceWriter.push_back(video::createImageWriterPNG());

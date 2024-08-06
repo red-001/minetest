@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 
 # This can be read from ${PROJECT_NAME} after project() is called
 project(minetest)
@@ -90,10 +90,24 @@ if(ANDROID)
 	include(MinetestAndroidLibs)
 endif()
 
+set(ENABLE_PROCESS_MEDIA_IN_RUST TRUE CACHE BOOL "Use rust image-rs image processing library for loading and saving textures.")
+
+if(ENABLE_PROCESS_MEDIA_IN_RUST)
+	add_definitions(-DENABLE_PROCESS_MEDIA_IN_RUST=1)
+	include(FetchContent)
+	FetchContent_Declare(
+		Corrosion
+		GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+		GIT_TAG 0941698d34dc40d02135c0ad5f930a67b62663e6 # GIT_TAG master
+	)
+	FetchContent_MakeAvailable(Corrosion)
+endif(ENABLE_PROCESS_MEDIA_IN_RUST)
+
 
 if(TRUE)
 	message(STATUS "Using imported IrrlichtMt at subdirectory 'irr'")
 	if(BUILD_CLIENT)
+		
 		add_subdirectory(irr EXCLUDE_FROM_ALL)
 
 		if(NOT TARGET IrrlichtMt)
@@ -245,6 +259,10 @@ if(BUILD_CLIENT)
 		install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/clientmods" DESTINATION "${SHAREDIR}")
 		install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/client/serverlist" DESTINATION "${SHAREDIR}/client")
 	endif()
+endif()
+
+if(ENABLE_PROCESS_MEDIA_IN_RUST AND BUILD_CLIENT)
+	corrosion_install(TARGETS rust_media_handler LIBRARY DESTINATION ${BINDIR})
 endif()
 
 install(FILES "README.md" DESTINATION "${DOCDIR}" COMPONENT "Docs")

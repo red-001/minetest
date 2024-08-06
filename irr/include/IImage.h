@@ -367,6 +367,12 @@ public:
 		return imageSize;
 	}
 
+	//! calculate image data size in bytes for selected format, width and height.
+	static u32 getDataSizeFromFormat(ECOLOR_FORMAT format, const core::dimension2d<u32>& size)
+	{
+		return getDataSizeFromFormat(format, size.Width, size.Height);
+	}
+
 	//! check if this is compressed color format
 	static bool isCompressedFormat(const ECOLOR_FORMAT format)
 	{

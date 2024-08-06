@@ -125,6 +125,8 @@ compile_commands.json
 *.vcxproj*
 *.sln
 .vs/
+# rust build
+rust_media_handler/target
 
 # Old irrlichtmt. Still ignored to make bisecting easier.
 lib/irrlichtmt

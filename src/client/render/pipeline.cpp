@@ -142,7 +142,7 @@ bool TextureBuffer::ensureTexture(video::ITexture **texture, const TextureDefini
 		if (definition.clear) {
 			video::IImage *image = m_driver->createImage(definition.format, size);
 			// Cannot use image->fill because it's not implemented for all formats.
-			std::memset(image->getData(), 0, image->getDataSizeFromFormat(definition.format, size.Width, size.Height));
+			std::memset(image->getData(), 0, image->getDataSizeFromFormat(definition.format, size));
 			*texture = m_driver->addTexture(definition.name.c_str(), image);
 			image->drop();
 		}

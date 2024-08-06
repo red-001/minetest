@@ -398,13 +398,24 @@ endif()
 set(IRRIMAGEOBJ
 	CColorConverter.cpp
 	CImage.cpp
-	CImageLoaderBMP.cpp
-	CImageLoaderJPG.cpp
-	CImageLoaderPNG.cpp
-	CImageLoaderTGA.cpp
 	CImageWriterJPG.cpp
 	CImageWriterPNG.cpp
 )
+
+if(ENABLE_PROCESS_MEDIA_IN_RUST)
+	set(IRRIMAGEOBJ
+		${IRRIMAGEOBJ}
+		CImageLoaderRust.cpp
+	)
+else()
+	set(IRRIMAGEOBJ
+		${IRRIMAGEOBJ}
+		CImageLoaderBMP.cpp
+		CImageLoaderJPG.cpp
+		CImageLoaderPNG.cpp
+		CImageLoaderTGA.cpp
+	)
+endif()
 
 add_library(IRRVIDEOOBJ OBJECT
 	CFPSCounter.cpp
@@ -488,6 +499,10 @@ foreach(object_lib
 	# Add objects from object library to main library
 	target_sources(IrrlichtMt PRIVATE $<TARGET_OBJECTS:${object_lib}>)
 endforeach()
+
+if(ENABLE_PROCESS_MEDIA_IN_RUST)
+	target_link_libraries(IrrlichtMt PUBLIC rust_media_handler)
+endif()
 
 # Alias target provides add_submodule compatibility
 add_library(IrrlichtMt::IrrlichtMt ALIAS IrrlichtMt)
