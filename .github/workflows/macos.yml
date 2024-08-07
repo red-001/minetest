@@ -31,6 +31,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+           submodules: 'true'
       - name: Install deps
         run: |
           source ./util/ci/common.sh
@@ -45,7 +47,8 @@ jobs:
             -DCMAKE_FIND_FRAMEWORK=LAST \
             -DCMAKE_INSTALL_PREFIX=../build/macos/ \
             -DRUN_IN_PLACE=FALSE -DENABLE_GETTEXT=TRUE \
-            -DINSTALL_DEVTEST=TRUE
+            -DINSTALL_DEVTEST=TRUE \
+            -DRust_ROOT=/opt/homebrew/opt/rustup/bin/
           cmake --build . -j$(sysctl -n hw.logicalcpu)
           make install
 

@@ -11,6 +11,8 @@
 
 #include "rust_format_loader.h"
 
+#include <memory>
+
 namespace irr
 {
 namespace video

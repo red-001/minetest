@@ -23,7 +23,7 @@ enum class status_code : uint32_t
 	Count
 };
 
-inline static constexpr char* status_code_name[static_cast<uint32_t>(status_code::Count)] = {
+inline static constexpr const char* status_code_name[static_cast<uint32_t>(status_code::Count)] = {
 	"Ok",
 	"IOError",
 	"DecodingError",

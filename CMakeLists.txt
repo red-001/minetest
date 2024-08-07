@@ -94,13 +94,27 @@ set(ENABLE_PROCESS_MEDIA_IN_RUST TRUE CACHE BOOL "Use rust image-rs image proces
 
 if(ENABLE_PROCESS_MEDIA_IN_RUST)
 	add_definitions(-DENABLE_PROCESS_MEDIA_IN_RUST=1)
-	include(FetchContent)
-	FetchContent_Declare(
-		Corrosion
-		GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-		GIT_TAG 0941698d34dc40d02135c0ad5f930a67b62663e6 # GIT_TAG master
-	)
-	FetchContent_MakeAvailable(Corrosion)
+	if (DEFINED ANDROID_ABI)
+		if(${ANDROID_ABI} STREQUAL "x86_64")
+			set(Rust_CARGO_TARGET "x86_64-linux-android")
+		elseif(${ANDROID_ABI} STREQUAL "x86")
+			set(Rust_CARGO_TARGET "i686-linux-android")
+		elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
+			set(Rust_CARGO_TARGET "aarch64-linux-android")
+		elseif(${ANDROID_ABI} STREQUAL "armeabi-v7a")
+			set(Rust_CARGO_TARGET "armv7-linux-androideabi")
+		else()
+			message(WARNING "Unable to determine correct android target to use for Rust.")
+		endif()
+	endif()
+	#include(FetchContent)
+	#FetchContent_Declare(
+	#	Corrosion
+	#	GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+	#	GIT_TAG 0941698d34dc40d02135c0ad5f930a67b62663e6 # GIT_TAG master
+	#)
+	#FetchContent_MakeAvailable(Corrosion)
+	add_subdirectory(corrosion-rs)
 endif(ENABLE_PROCESS_MEDIA_IN_RUST)
 
 

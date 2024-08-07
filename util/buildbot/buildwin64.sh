@@ -61,6 +61,8 @@ cmake_args=(
 	-DENABLE_CURL=1
 	-DENABLE_GETTEXT=1
 	-DENABLE_LEVELDB=1
+	
+	"-DRust_CARGO_TARGET=x86_64-pc-windows-gnullvm"
 )
 add_cmake_libs
 cmake -S $sourcedir -B build "${cmake_args[@]}"

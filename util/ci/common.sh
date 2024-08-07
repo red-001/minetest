@@ -1,5 +1,12 @@
 #!/bin/bash -e
 
+install_rust_deps() {
+	# Install Rust
+	curl --proto '=https' --tlsv1.3 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none -y
+	. "$HOME/.cargo/env"
+	rustup toolchain install nightly
+}
+
 # Linux build only
 install_linux_deps() {
 	local pkgs=(
@@ -11,7 +18,9 @@ install_linux_deps() {
 
 	sudo apt-get update
 	sudo apt-get install -y --no-install-recommends "${pkgs[@]}" "$@"
-
+	
+	install_rust_deps
+	
 	# set up Postgres for unit tests
 	if [ -n "$MINETEST_POSTGRESQL_CONNECT_STRING" ]; then
 		sudo systemctl start postgresql.service
@@ -37,4 +46,19 @@ install_macos_deps() {
 	brew install --display-times "${pkgs[@]}"
 	brew unlink $(brew ls --formula)
 	brew link "${pkgs[@]}"
+	
+	ls "/opt/homebrew/opt/rustup/bin"
+	
+	echo 'export PATH="/opt/homebrew/opt/rustup/bin:$PATH"' >> /Users/runner/.bash_profile
+	
+	"/opt/homebrew/opt/rustup/bin/rustup" toolchain install nightly
+}
+
+install_android_deps() {
+	install_rust_deps
+	rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+}
+install_clang_win_deps() {
+	install_rust_deps
+	rustup target add i686-pc-windows-gnullvm x86_64-pc-windows-gnullvm
 }
