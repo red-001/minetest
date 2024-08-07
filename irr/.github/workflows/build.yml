@@ -270,7 +270,7 @@ jobs:
     name: Android ${{ matrix.arch }}
     runs-on: ubuntu-20.04
     env:
-       ndk_version: "r25c"
+       ndk_version: "r27"
        ANDROID_NDK: ${{ github.workspace }}/android-ndk
     strategy:
       matrix:
