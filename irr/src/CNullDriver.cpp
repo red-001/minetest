@@ -985,6 +985,21 @@ IImage *CNullDriver::createImageFromFile(const io::path &filename)
 	file->drop();
 	return image;
 }
+IImage* CNullDriver::createImageFromFileInMemory(const void* memory, s32 len, const std::optional<io::path>& filename)
+{
+	io::IReadFile* file = this->FileSystem->createMemoryReadFile(
+		memory, len, filename.value_or(""));
+
+	if (!file) {
+		os::Printer::log("Couldn't create memory IReadFile!", ELL_ERROR);
+		return nullptr;
+	}
+
+	IImage* image = createImageFromFile(file);
+	file->drop();
+	return image;
+}
+
 
 IImage *CNullDriver::createImageFromFile(io::IReadFile *file)
 {

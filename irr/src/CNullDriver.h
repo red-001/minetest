@@ -253,6 +253,8 @@ public:
 
 	IImage *createImageFromFile(const io::path &filename) override;
 
+	IImage* createImageFromFileInMemory(const void* memory, s32 len, const std::optional<io::path>& filename = {}) override;
+
 	IImage *createImageFromFile(io::IReadFile *file) override;
 
 	//! Creates a software image from a byte array.

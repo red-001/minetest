@@ -793,26 +793,19 @@ bool Client::loadMedia(const std::string &data, const std::string &filename,
 		TRACESTREAM(<< "Client: Attempting to load image "
 			<< "file \"" << filename << "\"" << std::endl);
 
-		io::IFileSystem *irrfs = m_rendering_engine->get_filesystem();
 		video::IVideoDriver *vdrv = m_rendering_engine->get_video_driver();
 
-		io::IReadFile *rfile = irrfs->createMemoryReadFile(
-				data.c_str(), data.size(), filename.c_str());
-
-		FATAL_ERROR_IF(!rfile, "Could not create irrlicht memory file.");
-
 		// Read image
-		video::IImage *img = vdrv->createImageFromFile(rfile);
+		video::IImage *img = vdrv->createImageFromFileInMemory(data.c_str(), data.size(), filename.c_str());
 		if (!img) {
 			errorstream<<"Client: Cannot create image from data of "
 					<<"file \""<<filename<<"\""<<std::endl;
-			rfile->drop();
 			return false;
 		}
 
 		m_tsrc->insertSourceImage(filename, img);
 		img->drop();
-		rfile->drop();
+
 		return true;
 	}
 

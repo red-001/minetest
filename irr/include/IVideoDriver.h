@@ -17,6 +17,7 @@
 #include "EDriverFeatures.h"
 #include "SExposedVideoData.h"
 #include "SOverrideMaterial.h"
+#include <optional>
 
 namespace irr
 {
@@ -930,6 +931,18 @@ public:
 	If you no longer need the image, you should call IImage::drop().
 	See IReferenceCounted::drop() for more information. */
 	virtual IImage *createImageFromFile(io::IReadFile *file) = 0;
+
+	//! Creates a software image from a file.
+	/** No hardware texture will be created for this image. This
+	method is useful for example if you want to read a heightmap
+	for a terrain renderer.
+	\param memory: A pointer to the start of the file in memory
+	\param len: The length of the memory in bytes
+	\param fileName: The name given to this file, if known
+	\return The created image.
+	If you no longer need the image, you should call IImage::drop().
+	See IReferenceCounted::drop() for more information. */
+	virtual IImage * createImageFromFileInMemory(const void *memory, s32 len, const std::optional<io::path>& filename = {}) = 0;
 
 	//! Writes the provided image to a file.
 	/** Requires that there is a suitable image writer registered

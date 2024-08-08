@@ -1701,11 +1701,8 @@ bool ImageSource::generateImagePart(std::string_view part_of_name,
 			}
 
 			auto *device = RenderingEngine::get_raw_device();
-			auto *fs = device->getFileSystem();
 			auto *vd = device->getVideoDriver();
-			auto *memfile = fs->createMemoryReadFile(png.data(), png.size(), "[png_tmpfile");
-			video::IImage* pngimg = vd->createImageFromFile(memfile);
-			memfile->drop();
+			video::IImage* pngimg = vd->createImageFromFileInMemory(png.data(), png.size(), "[png_tmpfile");
 
 			if (!pngimg) {
 				errorstream << "generateImagePart(): Invalid PNG data" << std::endl;
