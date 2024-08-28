@@ -72,6 +72,7 @@ struct PlayerControl;
 class NetworkPacket;
 namespace con {
 class IConnection;
+class LocalNetwork;
 }
 using sound_handle_t = int;
 
@@ -158,6 +159,7 @@ public:
 
 	void connect(const Address &address, const std::string &address_name,
 		bool is_local_server);
+	void connectLocal(std::shared_ptr<con::LocalNetwork> interconnect);
 
 	/*
 		Stuff that references the environment is valid only as

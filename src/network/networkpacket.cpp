@@ -51,6 +51,19 @@ void NetworkPacket::putRawPacket(const u8 *data, u32 datasize, session_t peer_id
 		memcpy(m_data.data(), &data[2], m_datasize);
 }
 
+NetworkPacket NetworkPacket::convertToRecievedPacket(session_t peer_id) const
+{
+	NetworkPacket new_pkt;
+
+	new_pkt.m_command = this->m_command;
+	new_pkt.m_data = this->m_data;
+	new_pkt.m_datasize = m_datasize;
+	new_pkt.m_peer_id = peer_id;
+
+	return new_pkt;
+
+}
+
 void NetworkPacket::clear()
 {
 	m_data.clear();

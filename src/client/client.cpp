@@ -403,6 +403,14 @@ void Client::connect(const Address &address, const std::string &address_name,
 	initLocalMapSaving(address, m_address_name, is_local_server);
 }
 
+void Client::connectLocal(std::shared_ptr<con::LocalNetwork> interconnect)
+{
+	// local connections never use the fallback
+	sanity_check(!m_con);
+	m_con.reset(con::createLocalConnection(/*is_client=*/true, interconnect, this));
+	m_con->Connect({}); // dummy address
+}
+
 void Client::step(float dtime)
 {
 	// Limit a bit

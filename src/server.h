@@ -152,7 +152,7 @@ public:
 	Server(
 		const std::string &path_world,
 		const SubgameSpec &gamespec,
-		bool simple_singleplayer_mode,
+		std::shared_ptr<con::LocalNetwork> local_connection,
 		Address bind_addr,
 		bool dedicated,
 		ChatInterface *iface = nullptr,

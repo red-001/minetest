@@ -7,6 +7,8 @@
 #include "socket.h"
 #include "networkprotocol.h" // session_t
 
+#include <memory>
+
 class NetworkPacket;
 class PeerHandler;
 
@@ -66,8 +68,11 @@ public:
 	virtual float getPeerStat(session_t peer_id, rtt_stat_type type) = 0;
 	virtual float getLocalStat(rate_stat_type type) = 0;
 };
+class LocalNetwork;
 
 // MTP = Minetest Protocol
 IConnection *createMTP(float timeout, bool ipv6, PeerHandler *handler);
+// Local = memory only faux protocol for simple singleplayer
+IConnection* createLocalConnection(bool is_client, ::std::shared_ptr<LocalNetwork> exchange, PeerHandler* peer_handler);
 
 } // namespace

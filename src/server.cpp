@@ -246,7 +246,7 @@ std::wstring Server::ShutdownState::getShutdownTimerMessage() const
 Server::Server(
 		const std::string &path_world,
 		const SubgameSpec &gamespec,
-		bool simple_singleplayer_mode,
+		std::shared_ptr<con::LocalNetwork> local_connection,
 		Address bind_addr,
 		bool dedicated,
 		ChatInterface *iface,
@@ -255,10 +255,12 @@ Server::Server(
 	m_bind_addr(bind_addr),
 	m_path_world(path_world),
 	m_gamespec(gamespec),
-	m_simple_singleplayer_mode(simple_singleplayer_mode),
+	m_simple_singleplayer_mode(local_connection.get() != nullptr),
 	m_dedicated(dedicated),
 	m_async_fatal_error(""),
-	m_con(con::createMTP(CONNECTION_TIMEOUT, m_bind_addr.isIPv6(), this)),
+	m_con(local_connection ?
+		con::createLocalConnection(/*is_client=*/false, local_connection, this) :
+		con::createMTP(CONNECTION_TIMEOUT, m_bind_addr.isIPv6(), this)),
 	m_itemdef(createItemDefManager()),
 	m_nodedef(createNodeDefManager()),
 	m_craftdef(createCraftDefManager()),
@@ -544,8 +546,10 @@ void Server::start()
 {
 	init();
 
-	infostream << "Starting server on " << m_bind_addr.serializeString()
+	if (!m_simple_singleplayer_mode) {
+		infostream << "Starting server on " << m_bind_addr.serializeString()
 			<< "..." << std::endl;
+	}
 
 	// Stop thread if already running
 	m_thread->stop();
@@ -574,9 +578,12 @@ void Server::start()
 			std::cerr << line << std::endl;
 	}
 	actionstream << "World at [" << m_path_world << "]" << std::endl;
-	actionstream << "Server for gameid=\"" << m_gamespec.id
-			<< "\" listening on ";
-	m_bind_addr.print(actionstream);
+	actionstream << "Server for gameid=\"" << m_gamespec.id;
+	if (!m_simple_singleplayer_mode)
+	{
+		actionstream << "\" listening on ";
+		m_bind_addr.print(actionstream);
+	}
 	actionstream << "." << std::endl;
 }
 

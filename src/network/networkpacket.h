@@ -41,6 +41,7 @@ public:
 	~NetworkPacket() = default;
 
 	void putRawPacket(const u8 *data, u32 datasize, session_t peer_id);
+	NetworkPacket convertToRecievedPacket(session_t peer_id) const;
 	void clear();
 
 	// Getters

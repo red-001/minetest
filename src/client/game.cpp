@@ -56,6 +56,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "gui/profilergraph.h"
 #include "mapblock.h"
 #include "minimap.h"
+#include "network/local/exchange.h"
 #include "nodedef.h"         // Needed for determining pointing to nodes
 #include "nodemetadata.h"
 #include "particles.h"
@@ -917,6 +918,7 @@ private:
 	PausedNodesList paused_animated_nodes;
 
 	bool simple_singleplayer_mode;
+	std::shared_ptr<con::LocalNetwork> local_network;
 	/* End 'cache' */
 
 	/* Pre-calculated values
@@ -1102,6 +1104,8 @@ bool Game::startup(bool *kill,
 	this->input               = input;
 	this->chat_backend        = chat_backend;
 	simple_singleplayer_mode  = start_data.isSinglePlayer();
+	if (simple_singleplayer_mode)
+		local_network = std::make_shared<con::LocalNetwork>();
 
 	input->keycache.populate();
 
@@ -1384,35 +1388,38 @@ bool Game::createSingleplayerServer(const std::string &map_dir,
 {
 	showOverlayMessage(N_("Creating server..."), 0, 5);
 
-	std::string bind_str;
-	if (simple_singleplayer_mode) {
-		// Make the simple singleplayer server only accept connections from localhost,
-		// which also makes Windows Defender not show a warning.
-		bind_str = "127.0.0.1";
-	} else {
-		bind_str = g_settings->get("bind_address");
-	}
+	if (!simple_singleplayer_mode)
+	{
+		std::string bind_str = g_settings->get("bind_address");
 
-	Address bind_addr(0, 0, 0, 0, port);
+		Address bind_addr(0, 0, 0, 0, port);
 
-	if (g_settings->getBool("ipv6_server"))
-		bind_addr.setAddress(static_cast<IPv6AddressBytes*>(nullptr));
-	try {
-		bind_addr.Resolve(bind_str.c_str());
-	} catch (const ResolveError &e) {
-		warningstream << "Resolving bind address \"" << bind_str
-			<< "\" failed: " << e.what()
-			<< " -- Listening on all addresses." << std::endl;
-	}
-	if (bind_addr.isIPv6() && !g_settings->getBool("enable_ipv6")) {
-		*error_message = fmtgettext("Unable to listen on %s because IPv6 is disabled",
-			bind_addr.serializeString().c_str());
-		errorstream << *error_message << std::endl;
-		return false;
-	}
+		if (g_settings->getBool("ipv6_server"))
+			bind_addr.setAddress(static_cast<IPv6AddressBytes*>(nullptr));
+		try {
+			bind_addr.Resolve(bind_str.c_str());
+		}
+		catch (const ResolveError& e) {
+			warningstream << "Resolving bind address \"" << bind_str
+				<< "\" failed: " << e.what()
+				<< " -- Listening on all addresses." << std::endl;
+		}
+		if (bind_addr.isIPv6() && !g_settings->getBool("enable_ipv6")) {
+			*error_message = fmtgettext("Unable to listen on %s because IPv6 is disabled",
+				bind_addr.serializeString().c_str());
+			errorstream << *error_message << std::endl;
+			return false;
+		}
 
-	server = new Server(map_dir, gamespec, simple_singleplayer_mode, bind_addr,
-			false, nullptr, error_message);
+		server = new Server(map_dir, gamespec, nullptr,
+			bind_addr, false, nullptr,
+			error_message);
+	}
+	else {
+		server = new Server(map_dir, gamespec, local_network,
+			{}, false, nullptr,
+			error_message);
+	}
 
 	auto start_thread = runInThread([=] {
 		server->start();
@@ -1660,8 +1667,10 @@ bool Game::connectToServer(const GameStartData &start_data,
 		Wait for server to accept connection
 	*/
 
-	client->connect(connect_address, address_name,
-		simple_singleplayer_mode || local_server_mode);
+	if (!simple_singleplayer_mode)
+		client->connect(connect_address, address_name, local_server_mode);
+	else
+		client->connectLocal(local_network);
 
 	try {
 		input->clear();
