@@ -652,7 +652,7 @@ int ModApiServer::l_do_async_callback(lua_State *L)
 	size_t func_length;
 	const char *serialized_func_raw = lua_tolstring(L, -1, &func_length);
 
-	PackedValue *param = script_pack(L, 2);
+	PackedValue *param = script_pack_ptr(L, 2);
 
 	std::string mod_origin = readParam<std::string>(L, 3);
 
@@ -706,7 +706,7 @@ int ModApiServer::l_serialize_roundtrip(lua_State *L)
 	NO_MAP_LOCK_REQUIRED;
 
 	int top = lua_gettop(L);
-	auto *pv = script_pack(L, 1);
+	auto *pv = script_pack_ptr(L, 1);
 	if (top != lua_gettop(L))
 		throw LuaError("stack values leaked");
 

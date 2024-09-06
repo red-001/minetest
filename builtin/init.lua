@@ -51,6 +51,8 @@ dofile(commonpath .. "misc_helpers.lua")
 if INIT == "game" then
 	dofile(scriptdir .. "game" .. DIR_DELIM .. "init.lua")
 	assert(not core.get_http_api)
+elseif INIT == "trusted_game" then
+	dofile(scriptdir .. "trusted_game" .. DIR_DELIM .. "init.lua")
 elseif INIT == "mainmenu" then
 	local mm_script = core.settings:get("main_menu_script")
 	local custom_loaded = false

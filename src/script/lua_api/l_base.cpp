@@ -38,6 +38,8 @@ ScriptApiBase *ModApiBase::getScriptApiBase(lua_State *L)
 	sapi_ptr = (ScriptApiBase*) lua_touserdata(L, -1);
 #endif
 	lua_pop(L, 1);
+
+	SANITY_CHECK(sapi_ptr);
 	return sapi_ptr;
 }
 
@@ -74,6 +76,11 @@ GUIEngine *ModApiBase::getGuiEngine(lua_State *L)
 	return getScriptApiBase(L)->getGuiEngine();
 }
 #endif
+
+ScriptApiTrusted* ModApiBase::getTrustedAPI(lua_State *L)
+{
+	return getScriptApiBase(L)->getTrustedAPI();
+}
 
 EmergeThread *ModApiBase::getEmergeThread(lua_State *L)
 {

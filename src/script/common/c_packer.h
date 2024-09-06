@@ -120,10 +120,14 @@ void script_register_packer(lua_State *L, const char *regname,
 		PackInFunc fin, PackOutFunc fout);
 
 // Pack a Lua value
-PackedValue *script_pack(lua_State *L, int idx);
+PackedValue script_pack(lua_State *L, int idx, bool safe = false);
+inline PackedValue* script_pack_ptr(lua_State* L, int idx, bool safe = false)
+{
+	return new PackedValue(std::move(script_pack(L, idx, safe)));
+}
 // Unpack a Lua value (left on top of stack)
 // Note that this may modify the PackedValue, reusability is not guaranteed!
-void script_unpack(lua_State *L, PackedValue *val);
+void script_unpack(lua_State *L, PackedValue *val, bool safe = false);
 
 // Dump contents of PackedValue to stdout for debugging
 void script_dump_packed(const PackedValue *val);

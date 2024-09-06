@@ -62,6 +62,7 @@ enum class ScriptingType: u8 {
 	Client,
 	MainMenu,
 	Server,
+	TrustedServer,
 	Emerge
 };
 
@@ -73,6 +74,7 @@ class EmergeThread;
 class IGameDef;
 class Environment;
 class GUIEngine;
+class ScriptApiTrusted;
 class ServerActiveObject;
 struct PlayerHPChangeReason;
 
@@ -172,6 +174,9 @@ protected:
 	Environment* getEnv() { return m_environment; }
 	void setEnv(Environment* env) { m_environment = env; }
 
+	ScriptApiTrusted* getTrustedAPI() { return m_trusted_api; }
+	void setTrustedAPI(ScriptApiTrusted *trusted) { m_trusted_api = trusted; }
+
 #ifndef SERVER
 	GUIEngine* getGuiEngine() { return m_guiengine; }
 	void setGuiEngine(GUIEngine* guiengine) { m_guiengine = guiengine; }
@@ -197,8 +202,9 @@ private:
 
 	lua_State      *m_luastack = nullptr;
 
-	IGameDef       *m_gamedef = nullptr;
-	Environment    *m_environment = nullptr;
+	IGameDef         *m_gamedef     = nullptr;
+	Environment      *m_environment = nullptr;
+	ScriptApiTrusted *m_trusted_api = nullptr;
 #ifndef SERVER
 	GUIEngine      *m_guiengine = nullptr;
 #endif

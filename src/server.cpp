@@ -463,11 +463,13 @@ void Server::init()
 	// Initialize scripting
 	infostream << "Server: Initializing Lua" << std::endl;
 
-	m_script = std::make_unique<ServerScripting>(this);
+	m_trusted_script = std::make_unique<ServerTrustedScripting>(this);
+	m_script = std::make_unique<ServerScripting>(this, m_trusted_script.get());
 
 	// Must be created before mod loading because we have some inventory creation
 	m_inventory_mgr = std::make_unique<ServerInventoryManager>();
 
+	m_trusted_script->loadBuiltin();
 	m_script->loadBuiltin();
 
 	m_gamespec.checkAndLog();

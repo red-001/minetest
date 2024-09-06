@@ -46,16 +46,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "lua_api/l_settings.h"
 #include "lua_api/l_http.h"
 #include "lua_api/l_storage.h"
+#include "lua_api/l_trusted.h"
 
 extern "C" {
 #include <lualib.h>
 }
 
-ServerScripting::ServerScripting(Server* server):
+ServerScripting::ServerScripting(Server* server, ScriptApiTrusted* trusted_api):
 		ScriptApiBase(ScriptingType::Server),
 		asyncEngine(server)
 {
 	setGameDef(server);
+	setTrustedAPI(trusted_api);
 
 	// setEnv(env) is called by ScriptApiEnv::initializeEnvironment()
 	// once the environment has been created
@@ -104,7 +106,7 @@ void ServerScripting::saveGlobals()
 	luaL_checktype(L, -1, LUA_TTABLE);
 	lua_getfield(L, -1, "get_globals_to_transfer");
 	lua_call(L, 0, 1);
-	auto *data = script_pack(L, -1);
+	auto *data = script_pack_ptr(L, -1);
 	assert(!data->contains_userdata);
 	getServer()->m_lua_globals_data.reset(data);
 	// unset the function
@@ -176,6 +178,7 @@ void ServerScripting::InitializeModApi(lua_State *L, int top)
 	ModApiHttp::Initialize(L, top);
 	ModApiStorage::Initialize(L, top);
 	ModApiChannels::Initialize(L, top);
+	ModApiTrusted::Initialize(L, top);
 }
 
 void ServerScripting::InitializeAsync(lua_State *L, int top)

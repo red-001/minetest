@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/thread.h"
 #include "util/basic_macros.h"
 #include "util/metricsbackend.h"
+#include "script/scripting_trusted_server.h"
 #include "serverenvironment.h"
 #include "server/clientiface.h"
 #include "chatmessage.h"
@@ -435,6 +436,7 @@ protected:
 
 	// Scripting
 	// Envlock and conlock should be locked when using Lua
+	std::unique_ptr<ServerTrustedScripting> m_trusted_script;
 	std::unique_ptr<ServerScripting> m_script;
 
 	// Mods

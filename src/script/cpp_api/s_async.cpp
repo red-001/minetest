@@ -365,7 +365,7 @@ void* AsyncWorkerThread::run()
 			// Fetch result
 			if (use_ext) {
 				try {
-					j.result_ext.reset(script_pack(L, -1));
+					j.result_ext.reset(script_pack_ptr(L, -1));
 				} catch (const ModError &e) {
 					report_error(e);
 					result = LUA_ERRERR;

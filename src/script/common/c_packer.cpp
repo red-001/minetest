@@ -345,7 +345,7 @@ static VectorRef<PackedInstr> record_object(lua_State *L, int idx, PackedValue &
  * @param seen Map of seen objects (see record_object)
  * @return reference to the instruction that creates the value
 */
-static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, PackedValue &pv,
+static VectorRef<PackedInstr> pack_inner(lua_State *L, bool safe, int idx, int vidx, PackedValue &pv,
 		std::unordered_map<const void *, s32> &seen)
 {
 #ifndef NDEBUG
@@ -383,6 +383,9 @@ static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, Packed
 			break; // execution continues
 		}
 		case LUA_TFUNCTION: {
+			if (safe)
+				throw LuaError("Cannot serialize functions in safe mode");
+
 			auto r = record_object(L, idx, pv, seen);
 			if (r)
 				return r;
@@ -396,6 +399,9 @@ static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, Packed
 			return r;
 		}
 		case LUA_TUSERDATA: {
+			if (safe)
+				throw LuaError("Cannot serialize userdata in safe mode");
+
 			auto r = record_object(L, idx, pv, seen);
 			if (r)
 				return r;
@@ -437,7 +443,7 @@ static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, Packed
 		// only works in certain circumstances, hence the check:
 		if (can_set_into(ktype, vtype) && suitable_key(L, -2)) {
 			// push only the value
-			auto rval = pack_inner(L, absidx(L, -1), vidx, pv, seen);
+			auto rval = pack_inner(L, safe, absidx(L, -1), vidx, pv, seen);
 			vidx++;
 			rval->pop = rval->type != LUA_TTABLE;
 			// where to put it:
@@ -455,9 +461,9 @@ static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, Packed
 			vidx--;
 		} else {
 			// push the key and value
-			pack_inner(L, absidx(L, -2), vidx, pv, seen);
+			pack_inner(L, safe, absidx(L, -2), vidx, pv, seen);
 			vidx++;
-			pack_inner(L, absidx(L, -1), vidx, pv, seen);
+			pack_inner(L, safe, absidx(L, -1), vidx, pv, seen);
 			vidx++;
 			// push an instruction to set them
 			auto ri1 = emplace(pv, INSTR_SETTABLE);
@@ -472,6 +478,8 @@ static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, Packed
 	}
 
 	// try to preserve metatable information
+	// safe to do as long as trusted enviroment is careful with what
+	// metatables it registers
 	if (lua_getmetatable(L, idx) && get_known_lua_metatables(L)) {
 		lua_insert(L, -2);
 		lua_gettable(L, -2);
@@ -488,24 +496,24 @@ static VectorRef<PackedInstr> pack_inner(lua_State *L, int idx, int vidx, Packed
 	return rtable;
 }
 
-PackedValue *script_pack(lua_State *L, int idx)
+PackedValue script_pack(lua_State *L, int idx, bool safe)
 {
 	if (idx < 0)
 		idx = absidx(L, idx);
 
 	PackedValue pv;
 	std::unordered_map<const void *, s32> seen;
-	pack_inner(L, idx, 1, pv, seen);
+	pack_inner(L, safe, idx, 1, pv, seen);
 
 	// allocate last for exception safety
-	return new PackedValue(std::move(pv));
+	return pv;
 }
 
 //
 // Unpacking implementation
 //
 
-void script_unpack(lua_State *L, PackedValue *pv)
+void script_unpack(lua_State *L, PackedValue *pv, bool safe)
 {
 	// table that tracks objects for keep_ref / PUSHREF (key = instr index)
 	lua_newtable(L);
@@ -575,9 +583,13 @@ void script_unpack(lua_State *L, PackedValue *pv)
 				lua_createtable(L, i.uidata1, i.uidata2);
 				break;
 			case LUA_TFUNCTION:
+				sanity_check(!safe);
+
 				luaL_loadbuffer(L, i.sdata.data(), i.sdata.size(), nullptr);
 				break;
 			case LUA_TUSERDATA: {
+				sanity_check(!safe);
+
 				PackerTuple ser;
 				sanity_check(find_packer(i.sdata.c_str(), ser));
 				ser.second.fout(L, i.ptrdata);
