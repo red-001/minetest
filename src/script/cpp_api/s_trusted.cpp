@@ -38,3 +38,26 @@ void ScriptApiTrusted::step(float dtime)
 	lua_pushnumber(L, dtime);
 	runCallbacks(1, RUN_CALLBACKS_MODE_FIRST);
 }
+
+void ScriptApiTrusted::onModsLoaded()
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	// Get registered shutdown hooks
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_mods_loaded");
+	// Call callbacks
+	runCallbacks(0, RUN_CALLBACKS_MODE_FIRST);
+}
+
+void ScriptApiTrusted::onShutdown()
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	// Get registered shutdown hooks
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_shutdown");
+	// Call callbacks
+	runCallbacks(0, RUN_CALLBACKS_MODE_FIRST);
+}
+

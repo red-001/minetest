@@ -12,4 +12,6 @@ class ScriptApiTrusted : virtual public ScriptApiBase {
 public:
 	void runTrustedFunction(std::string_view function, std::vector<PackedValue> arguments, std::vector<PackedValue> &return_values);
 	void step(float dtime);
+	void onModsLoaded();
+	void onShutdown();
 };

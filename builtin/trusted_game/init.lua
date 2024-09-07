@@ -42,6 +42,9 @@ core.forceload_free_block = nil
 wrap_untrusted("forceload_block", 3, 1)
 wrap_untrusted("forceload_free_block", 2, 0)
 
+-- calls callbacks
+wrap_untrusted("run_priv_callbacks", 4, 0)
+
 -- disable these since users might think a trusted mapgen or async environment exists
 core.register_mapgen_script = nil
 core.register_async_dofile = nil

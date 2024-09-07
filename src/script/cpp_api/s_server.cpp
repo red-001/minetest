@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "cpp_api/s_server.h"
 #include "cpp_api/s_internal.h"
+#include "cpp_api/s_trusted.h"
 #include "common/c_converter.h"
 #include "util/numeric.h" // myrand
 
@@ -157,6 +158,10 @@ void ScriptApiServer::on_mods_loaded()
 {
 	SCRIPTAPI_PRECHECKHEADER
 
+	auto* trusted = getTrustedAPI();
+	if (trusted)
+		trusted->onModsLoaded();
+
 	// Get registered shutdown hooks
 	lua_getglobal(L, "core");
 	lua_getfield(L, -1, "registered_on_mods_loaded");
@@ -167,6 +172,10 @@ void ScriptApiServer::on_mods_loaded()
 void ScriptApiServer::on_shutdown()
 {
 	SCRIPTAPI_PRECHECKHEADER
+
+	auto* trusted = getTrustedAPI();
+	if (trusted)
+		trusted->onShutdown();
 
 	// Get registered shutdown hooks
 	lua_getglobal(L, "core");
