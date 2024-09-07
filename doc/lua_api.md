@@ -6985,6 +6985,7 @@ Server
       * You can also call this at startup time. In that case `callback` MUST
         be `nil` and you cannot use `ephemeral` or `to_player`, as these logically
         do not make sense.
+      * `callback` also cannot be used in the trusted environment.
     * Clients will attempt to fetch files added this way via remote media,
       this can make transfer of bigger files painless (if set up). Nevertheless
       it is advised not to use dynamic media for big media files.

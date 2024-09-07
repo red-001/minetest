@@ -123,4 +123,5 @@ private:
 
 public:
 	static void Initialize(lua_State *L, int top);
+	static void InitializeTrusted(lua_State *L, int top);
 };

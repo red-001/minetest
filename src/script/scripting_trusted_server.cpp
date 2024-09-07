@@ -86,12 +86,12 @@ void ServerTrustedScripting::InitializeModApi(lua_State *L, int top)
 
 	// Initialize mod api modules
 	ModApiAuth::Initialize(L, top);
-	ModApiCraft::Initialize(L, top);
+	ModApiCraft::InitializeAsync(L, top);
 	ModApiEnv::Initialize(L, top);
-	ModApiInventory::Initialize(L, top);
-	//ModApiItem::Initialize(L, top);
-	//ModApiMapgen::Initialize(L, top);
-	//ModApiParticles::Initialize(L, top);
+	ModApiInventory::InitializeTrusted(L, top);
+	ModApiItem::InitializeAsync(L, top);
+	ModApiMapgen::InitializeEmerge(L, top);
+	ModApiParticles::Initialize(L, top);
 	ModApiRollback::Initialize(L, top);
 	ModApiServer::Initialize(L, top);
 	ModApiUtil::Initialize(L, top);

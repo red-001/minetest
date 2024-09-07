@@ -166,7 +166,10 @@ int ModApiHttp::l_request_http_api(lua_State *L)
 {
 	NO_MAP_LOCK_REQUIRED;
 
-	if (!ScriptApiSecurity::checkWhitelisted(L, "secure.http_mods") &&
+	bool isTrusted = ModApiBase::getType(L) == ScriptingType::TrustedServer;
+
+	if (!isTrusted &&
+			!ScriptApiSecurity::checkWhitelisted(L, "secure.http_mods") &&
 			!ScriptApiSecurity::checkWhitelisted(L, "secure.trusted_mods")) {
 		lua_pushnil(L);
 		return 1;
@@ -221,10 +224,7 @@ void ModApiHttp::Initialize(lua_State *L, int top)
 {
 #if USE_CURL
 
-	bool isMainmenu = false;
-#ifndef SERVER
-	isMainmenu = ModApiBase::getGuiEngine(L) != nullptr;
-#endif
+	bool isMainmenu = ModApiBase::getType(L) == ScriptingType::MainMenu;
 
 	if (isMainmenu) {
 		API_FCT(get_http_api);

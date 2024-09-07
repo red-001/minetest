@@ -74,6 +74,11 @@ public:
 		return scriptIfaceDowncast;
 	}
 
+	inline static ScriptingType getType(lua_State* L)
+	{
+		return getScriptApiBase(L)->getType();
+	}
+
 	static bool registerFunction(lua_State *L,
 			const char* name,
 			lua_CFunction func,

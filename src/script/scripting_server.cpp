@@ -98,6 +98,23 @@ void ServerScripting::loadBuiltin()
 	checkSetByBuiltin();
 }
 
+void ServerScripting::loadModSpec(const ModSpec& spec)
+{
+	// load the untrusted part of the mod
+	const std::string script_path = spec.path + DIR_DELIM + "init.lua";
+	loadMod(script_path, spec.name);
+
+	if (spec.isolate_trusted) {
+		if (!checkModTrusted(spec.name)) {
+			infostream << "Mod \"" << spec.name << "\" requests isolated secure mode"
+				" but is not a trusted mod" << std::endl;
+			return;
+		}
+		const std::string trusted_script_path = spec.path + DIR_DELIM + "init_trusted.lua";
+		getTrustedAPI()->loadMod(trusted_script_path, spec.name);
+	}
+}
+
 void ServerScripting::saveGlobals()
 {
 	SCRIPTAPI_PRECHECKHEADER

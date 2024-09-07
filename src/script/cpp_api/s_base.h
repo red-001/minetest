@@ -35,6 +35,7 @@ extern "C" {
 #include "irrlichttypes.h"
 #include "common/c_types.h"
 #include "common/c_internal.h"
+#include "common/c_packer.h"
 #include "debug.h"
 #include "config.h"
 
@@ -188,6 +189,8 @@ protected:
 	void objectrefGetOrCreate(lua_State *L, ServerActiveObject *cobj);
 
 	void pushPlayerHPChangeReason(lua_State *L, const PlayerHPChangeReason& reason);
+
+	void callPacked(std::vector<PackedValue> arguments, std::vector<PackedValue>& return_values, int error_handler);
 
 	std::recursive_mutex m_luastackmutex;
 	std::string     m_last_run_mod;

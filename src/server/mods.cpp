@@ -63,9 +63,8 @@ void ServerModManager::loadMods(ServerScripting &script)
 	for (const ModSpec &mod : configuration.getMods()) {
 		mod.checkAndLog();
 
-		std::string script_path = mod.path + DIR_DELIM + "init.lua";
 		auto t = porting::getTimeMs();
-		script.loadMod(script_path, mod.name);
+		script.loadModSpec(mod);
 		infostream << "Mod \"" << mod.name << "\" loaded after "
 			<< (porting::getTimeMs() - t) << " ms" << std::endl;
 	}

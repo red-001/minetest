@@ -51,7 +51,8 @@ public:
 	ServerScripting(Server* server, ScriptApiTrusted* trusted_api = nullptr);
 
 	void loadBuiltin();
-	// use ScriptApiBase::loadMod() to load mods
+
+	void loadModSpec(const ModSpec& spec);
 
 	// Save globals that are copied into other Lua envs
 	void saveGlobals();

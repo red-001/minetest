@@ -56,6 +56,25 @@ protected:
 
 class ModApiEnv : public ModApiEnvBase {
 private:
+
+	template<typename T>
+	static T* getScriptApiForEnv(lua_State* L) {
+		T* scriptIface = nullptr;
+
+		if (getType(L) == ScriptingType::TrustedServer) {
+			Server* server = getServer(L);
+			SANITY_CHECK(server);
+			scriptIface = server->getScriptIface();
+			if (!scriptIface)
+				throw LuaError("This API is not avaiable during late shutdown");
+		}
+		else {
+			scriptIface = getScriptApi<T>(L);
+		}
+
+		return scriptIface;
+	}
+
 	// set_node(pos, node)
 	// pos = {x=num, y=num, z=num}
 	static int l_set_node(lua_State *L);

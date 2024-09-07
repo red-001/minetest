@@ -381,6 +381,30 @@ void ScriptApiBase::runCallbacksRaw(int nargs,
 	lua_remove(L, error_handler);
 }
 
+void ScriptApiBase::callPacked(std::vector<PackedValue> arguments, std::vector<PackedValue>& return_values, int error_handler)
+{
+	lua_State* L = getStack();
+
+	int args_start = lua_gettop(L);
+
+	for (PackedValue& value : arguments)
+		script_unpack(L, &value, /*safe=*/true);
+
+	int res = lua_pcall(L, static_cast<int>(arguments.size()), LUA_MULTRET, error_handler);
+
+	if (res)
+		scriptError(res, __func__);
+
+
+	int args_end = lua_gettop(L);
+	return_values.reserve(args_end - args_start);
+
+	for (int i = args_start; i <= args_end; i++)
+		return_values.push_back(script_pack(L, i, /*safe=*/true));
+
+	lua_settop(L, args_start);
+}
+
 void ScriptApiBase::realityCheck()
 {
 	int top = lua_gettop(m_luastack);

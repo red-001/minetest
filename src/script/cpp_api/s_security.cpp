@@ -505,7 +505,7 @@ bool ScriptApiSecurity::safeLoadFile(lua_State *L, const char *path, const char 
 }
 
 
-bool checkModNameWhitelisted(const std::string &mod_name, const std::string &setting)
+bool checkModNameWhitelisted(const std::string_view mod_name, const std::string &setting)
 {
 	assert(str_starts_with(setting, "secure."));
 
@@ -524,6 +524,11 @@ bool ScriptApiSecurity::checkWhitelisted(lua_State *L, const std::string &settin
 {
 	std::string mod_name = ScriptApiBase::getCurrentModName(L);
 	return checkModNameWhitelisted(mod_name, setting);
+}
+
+bool ScriptApiSecurity::checkModTrusted(std::string_view mod_name)
+{
+	return checkModNameWhitelisted(mod_name, "secure.trusted_mods");
 }
 
 

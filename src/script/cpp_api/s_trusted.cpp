@@ -25,22 +25,7 @@ void ScriptApiTrusted::runTrustedFunction(std::string_view function, std::vector
 	if (!lua_isfunction(L, -1))
 		throw LuaError("trusted function not found!");
 
-	int args_start = lua_gettop(L);
-
-	for (PackedValue &value : arguments)
-		script_unpack(L, &value, /*safe=*/true);
-
-	int res = lua_pcall(L, static_cast<int>(arguments.size()), LUA_MULTRET, error_handler);
-
-	if (res)
-		scriptError(res, __func__);
-
-
-	int args_end = lua_gettop(L);
-	return_values.reserve(args_end - args_start);
-
-	for (int i = args_start; i <= args_end; i++)
-		return_values.push_back(script_pack(L, i, /*safe=*/true));
+	callPacked(arguments, return_values, error_handler);
 }
 
 void ScriptApiTrusted::step(float dtime)

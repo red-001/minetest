@@ -103,6 +103,9 @@ bool parseModContents(ModSpec &spec)
 	if (info.exists("release"))
 		spec.release = info.getS32("release");
 
+	if (info.exists("isolate_trusted"))
+		spec.isolate_trusted = info.getBool("isolate_trusted");
+
 	// Attempt to load dependencies from mod.conf
 	bool mod_conf_has_depends = false;
 	if (info.exists("depends")) {

@@ -52,6 +52,8 @@ public:
 	// Check if mod is whitelisted in the given setting
 	// This additionally checks that the mod's main file scope is executing.
 	static bool checkWhitelisted(lua_State *L, const std::string &setting);
+	// check if a mod is trusted
+	static bool checkModTrusted(std::string_view mod_name);
 	// Checks if mods are allowed to read (and optionally write) to the path
 	static bool checkPath(lua_State *L, const char *path, bool write_required,
 			bool *write_allowed=NULL);

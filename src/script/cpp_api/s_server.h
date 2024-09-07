@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "cpp_api/s_base.h"
 #include <set>
+#include <common/c_packer.h>
 
 class ScriptApiServer
 		: virtual public ScriptApiBase
@@ -54,6 +55,8 @@ public:
 	static u32 allocateDynamicMediaCallback(lua_State *L, int f_idx);
 	void freeDynamicMediaCallback(u32 token);
 	void on_dynamic_media_added(u32 token, const std::string &playername);
+	
+	void callInternalFunction(std::string_view table, std::string_view function, std::vector<PackedValue> arguments, std::vector<PackedValue>& return_values);
 
 private:
 	void getAuthHandler();

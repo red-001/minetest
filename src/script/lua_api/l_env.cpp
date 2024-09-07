@@ -434,7 +434,7 @@ int ModApiEnv::l_place_node(lua_State *L)
 {
 	GET_ENV_PTR;
 
-	ScriptApiItem *scriptIfaceItem = getScriptApi<ScriptApiItem>(L);
+	ScriptApiItem *scriptIfaceItem = getScriptApiForEnv<ScriptApiItem>(L);
 	Server *server = getServer(L);
 	const NodeDefManager *ndef = server->ndef();
 	IItemDefManager *idef = server->idef();
@@ -477,7 +477,7 @@ int ModApiEnv::l_dig_node(lua_State *L)
 {
 	GET_ENV_PTR;
 
-	ScriptApiNode *scriptIfaceNode = getScriptApi<ScriptApiNode>(L);
+	ScriptApiNode *scriptIfaceNode = getScriptApiForEnv<ScriptApiNode>(L);
 
 	v3s16 pos = read_v3s16(L, 1);
 
@@ -509,13 +509,13 @@ int ModApiEnv::l_punch_node(lua_State *L)
 {
 	GET_ENV_PTR;
 
-	ScriptApiNode *scriptIfaceNode = getScriptApi<ScriptApiNode>(L);
+	ScriptApiNode* scriptIfaceNode = getScriptApiForEnv<ScriptApiNode>(L);
 
 	v3s16 pos = read_v3s16(L, 1);
 
 	// Don't attempt to load non-loaded area as of now
 	MapNode n = env->getMap().getNode(pos);
-	if(n.getContent() == CONTENT_IGNORE){
+	if(n.getContent() == CONTENT_IGNORE) {
 		lua_pushboolean(L, false);
 		return 1;
 	}

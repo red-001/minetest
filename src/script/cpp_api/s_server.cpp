@@ -260,3 +260,22 @@ void ScriptApiServer::on_dynamic_media_added(u32 token, const std::string &playe
 	lua_pushstring(L, playername.c_str());
 	PCALL_RES(lua_pcall(L, 1, 0, error_handler));
 }
+
+void ScriptApiServer::callInternalFunction(std::string_view table, std::string_view function, std::vector<PackedValue> arguments, std::vector<PackedValue>& return_values)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	int error_handler = PUSH_ERROR_HANDLER(L);
+
+	if ("auth" == table)
+		getAuthHandler();
+	else
+		lua_getglobal(L, table.data());
+	luaL_checktype(L, -1, LUA_TTABLE);
+
+	lua_getfield(L, -1, function.data());
+	luaL_checktype(L, -1, LUA_TFUNCTION);
+	lua_remove(L, -2); // Remove table
+
+	callPacked(arguments, return_values, error_handler);
+}

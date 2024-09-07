@@ -527,3 +527,8 @@ void ModApiInventory::Initialize(lua_State *L, int top)
 	API_FCT(remove_detached_inventory_raw);
 	API_FCT(get_inventory);
 }
+
+void ModApiInventory::InitializeTrusted(lua_State* L, int top)
+{
+	API_FCT(get_inventory);
+}

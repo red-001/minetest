@@ -1,15 +1,4 @@
--- Minetest: builtin/item_entity.lua
-
-function core.spawn_item(pos, item)
-	-- Take item in any format
-	local stack = ItemStack(item)
-	local obj = core.add_entity(pos, "__builtin:item")
-	-- Don't use obj if it couldn't be added to the map.
-	if obj then
-		obj:get_luaentity():set_item(stack:to_string())
-	end
-	return obj
-end
+-- Minetest: builtin/game/tem_entity.lua
 
 -- If item_entity_ttl is not set, enity will have default life time
 -- Setting it to -1 disables the feature
