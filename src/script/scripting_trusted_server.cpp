@@ -90,7 +90,7 @@ void ServerTrustedScripting::InitializeModApi(lua_State *L, int top)
 	ModApiEnv::Initialize(L, top);
 	ModApiInventory::InitializeTrusted(L, top);
 	ModApiItem::InitializeAsync(L, top);
-	ModApiMapgen::InitializeEmerge(L, top);
+	ModApiMapgen::Initialize(L, top);
 	ModApiParticles::Initialize(L, top);
 	ModApiRollback::Initialize(L, top);
 	ModApiServer::Initialize(L, top);

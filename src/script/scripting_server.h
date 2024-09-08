@@ -48,7 +48,7 @@ class ServerScripting:
 		public ScriptApiSecurity
 {
 public:
-	ServerScripting(Server* server, ScriptApiTrusted* trusted_api = nullptr);
+	ServerScripting(Server* server, ScriptApiTrusted* trusted_api);
 
 	void loadBuiltin();
 
