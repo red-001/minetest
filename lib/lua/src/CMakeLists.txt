@@ -32,6 +32,10 @@ set(LUA_CORE_SRC
 	lvm.c
 	lzio.c
 )
+if (LUA_ENABLE_INTERNAL_TESTS)
+	list(APPEND LUA_CORE_SRC "ltests.c")
+	add_definitions(-DLUA_USER_H=\"ltests.h\")
+endif()
 
 # Lua library
 add_library(lua STATIC ${LUA_CORE_SRC})
@@ -43,3 +47,9 @@ set_target_properties(lua PROPERTIES
 
 # Compile code as C++
 set_source_files_properties(${LUA_CORE_SRC} PROPERTIES LANGUAGE CXX)
+
+if(LUA_ENABLE_INTERNAL_TESTS)
+	target_include_directories(lua PRIVATE src)
+	add_executable(lua_binary ${LUA_CORE_SRC} lua.c)
+	set_source_files_properties(lua.c PROPERTIES LANGUAGE CXX)
+endif()

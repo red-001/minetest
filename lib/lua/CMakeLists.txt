@@ -9,6 +9,8 @@ set(COMMON_CFLAGS)
 set(COMMON_LDFLAGS)
 set(LIBS)
 
+set(LUA_ENABLE_INTERNAL_TESTS OFF CACHE BOOL "Enable internal Lua tests. Will also produce a separate Lua executable.")
+
 if(APPLE)
 	set(DEFAULT_POSIX TRUE)
 	set(DEFAULT_DLOPEN OFF)
