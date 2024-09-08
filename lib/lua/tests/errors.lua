@@ -186,6 +186,13 @@ function f() error{msg='x'} end
 res, msg = xpcall(f, function (r) return {msg=r.msg..'y'} end)
 assert(msg.msg == 'xy')
 
+-- xpcall with arguments
+a, b, c = xpcall(string.find, error, "alo", "al")
+assert(a and b == 1 and c == 2)
+a, b, c = xpcall(string.find, function (x) return {} end, true, "al")
+assert(not a and type(b) == "table" and c == nil)
+
+
 print('+')
 checksyntax("syntax error", "", "error", 1)
 checksyntax("1.000", "", "1.000", 1)
