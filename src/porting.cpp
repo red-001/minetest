@@ -56,6 +56,11 @@
 	#include <malloc.h>
 #endif
 
+#if HAVE_GETENTROPY
+	#include <sys/random.h>
+	#define USE_GETENTROPY 1
+#endif
+
 #include "debug.h"
 #include "filesys.h"
 #include "log.h"
@@ -807,14 +812,45 @@ void secure_rand_fill_buf(void *buf, size_t len)
 
 #else
 
-static void fill_secure_buffer_posix(void *buf, size_t len)
+static void fill_secure_buffer_posix(char *buf, size_t len)
 {
-	// N.B.  This function checks *only* for /dev/urandom, because on most
-	// common OSes it is non-blocking, whereas /dev/random is blocking, and it
-	// is exceptionally uncommon for there to be a situation where /dev/random
-	// exists but /dev/urandom does not.  This guesswork is necessary since
-	// random devices are not covered by any POSIX standard...
-	// 2026 update: This does not appear to be the case on any major Unix-like (Mac, Net|Free|OpenBSD, Linux)
+#if USE_GETENTROPY
+	// https://man7.org/linux/man-pages/man3/getentropy.3.html
+	// https://man7.org/linux/man-pages/man2/getrandom.2.html
+	// https://linux.die.net/man/4/urandom
+	// https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/dev/random/randomdev.c#L116
+
+	// Linux /dev/urandom can end up being seeded with low quality predictable RNG
+	// which allows guessing values it generates by predicting initial state
+	// this is mostly an IoT issue and not an issue for full desktop or server environments
+	//
+	// /dev/random on the other hand, depending on the platform can block even if it has sufficient
+	// seeding because the authors of it assumed a CSPRNG is broken if it's not re-seeded often
+	//
+	// getentropy with flags set to zero semantics match /dev/urandom at runtime,
+	// but it checks the system got enough entropy to make the initial state of
+	// the CSPRNG unguessable by using getrandom
+	// "getrandom() will block until the entropy pool has been initialized"
+	//
+
+	// read in blocks of at most 256 per man page
+	constexpr size_t MAX_LEN_GEN = 256;
+	int status;
+	do {
+		const size_t len_read = std::min(len, MAX_LEN_GEN);
+		status = getentropy(buf, len_read);
+		if (status == 0) {
+			len-=len_read;
+			buf+=len_read;
+		}
+	} while (status == 0 && len > 0);
+
+	if (len == 0)
+		return;
+
+	// fall through if the failure is due to not supporting the syscall required
+	FATAL_ERROR_IF(errno != ENOSYS, "Unable to get entropy with getentropy");
+#endif
 	FILE *fp = fopen("/dev/urandom", "rb");
 	FATAL_ERROR_IF(!fp, "Your unix-like system does not support /dev/urandom, unable to continue");
 
@@ -827,21 +863,19 @@ static void fill_secure_buffer_posix(void *buf, size_t len)
 void secure_rand_fill_buf(void *buf, size_t len)
 {
 	// small csprng reads are piped to this instead of doing a syscall
-	static constexpr size_t SMALL_BUFF_SIZE = 512;
+	constexpr size_t SMALL_BUFF_SIZE = 512; // two buffers of getentropy
 	static thread_local size_t m_thread_rand_idx = SMALL_BUFF_SIZE;
 	static thread_local char m_thread_rand_buffer[SMALL_BUFF_SIZE];
 
-	if (len < SMALL_BUFF_SIZE)
-	{
-		char *out_buf = reinterpret_cast<char*>(buf);
+	char *out_buf = reinterpret_cast<char*>(buf);
+
+	if (len < SMALL_BUFF_SIZE) {
 		// small read optimized path
 		size_t len_remaining = SMALL_BUFF_SIZE - m_thread_rand_idx;
 		if (len_remaining >= len) {
 			memcpy(out_buf, &m_thread_rand_buffer[m_thread_rand_idx], len);
 			m_thread_rand_idx += len;
-		}
-		else
-		{
+		} else {
 			// Copy over with what we have left from our current buffer
 			memcpy(out_buf, &m_thread_rand_buffer[m_thread_rand_idx], len_remaining);
 
@@ -850,10 +884,8 @@ void secure_rand_fill_buf(void *buf, size_t len)
 			memcpy(&out_buf[len_remaining], m_thread_rand_buffer, len - len_remaining);
 			m_thread_rand_idx = len - len_remaining;
 		}
-	}
-	else
-	{
-		fill_secure_buffer_posix(buf, len);
+	} else {
+		fill_secure_buffer_posix(out_buf, len);
 	}
 }
 

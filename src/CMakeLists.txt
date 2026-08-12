@@ -368,6 +368,13 @@ endif()
 include(CheckSymbolExists)
 check_symbol_exists(strlcpy "string.h" HAVE_STRLCPY)
 
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("#include <sys/random.h>
+int main() {
+	unsigned char buffer[1];
+	return getentropy(buffer, sizeof(buffer)) != 0;
+}" HAVE_GETENTROPY)
+
 if(UNIX)
 	check_symbol_exists(malloc_trim "malloc.h" HAVE_MALLOC_TRIM)
 else()
