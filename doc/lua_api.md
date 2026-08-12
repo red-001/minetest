@@ -9819,7 +9819,7 @@ In multiplayer mode, the error may be arbitrarily large.
 `SecureRandom`
 --------------
 
-Interface for the operating system's crypto-secure PRNG. It can be created via `SecureRandom()`. 
+Interface for the operating system's crypto-secure PRNG. It can be created via `SecureRandom()`
 
 ### Methods
 
