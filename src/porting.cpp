@@ -792,35 +792,69 @@ void initializePaths()
 
 #ifdef WIN32
 
-bool secure_rand_fill_buf(void *buf, size_t len)
+void secure_rand_fill_buf(void *buf, size_t len)
 {
 	HCRYPTPROV wctx;
 
-	if (!CryptAcquireContext(&wctx, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
-		return false;
+	bool success = CryptAcquireContext(&wctx, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+	FATAL_ERROR_IF(!success, "CryptAcquireContext failed, this should never happen");
 
-	bool success = CryptGenRandom(wctx, len, (BYTE *)buf);
+	success = CryptGenRandom(wctx, len, (BYTE *)buf);
 	CryptReleaseContext(wctx, 0);
-	return success;
+
+	FATAL_ERROR_IF(!success, "Unable to interface with system CSPRNG, this should never happen");
 }
 
 #else
 
-bool secure_rand_fill_buf(void *buf, size_t len)
+static void fill_secure_buffer_posix(void *buf, size_t len)
 {
 	// N.B.  This function checks *only* for /dev/urandom, because on most
 	// common OSes it is non-blocking, whereas /dev/random is blocking, and it
 	// is exceptionally uncommon for there to be a situation where /dev/random
 	// exists but /dev/urandom does not.  This guesswork is necessary since
 	// random devices are not covered by any POSIX standard...
+	// 2026 update: This does not appear to be the case on any major Unix-like (Mac, Net|Free|OpenBSD, Linux)
 	FILE *fp = fopen("/dev/urandom", "rb");
-	if (!fp)
-		return false;
+	FATAL_ERROR_IF(!fp, "Your unix-like system does not support /dev/urandom, unable to continue");
 
 	bool success = fread(buf, len, 1, fp) == 1;
-
 	fclose(fp);
-	return success;
+
+	FATAL_ERROR_IF(!success, "Unable to interface with system CSPRNG, this should never happen");
+}
+
+void secure_rand_fill_buf(void *buf, size_t len)
+{
+	// small csprng reads are piped to this instead of doing a syscall
+	static constexpr size_t SMALL_BUFF_SIZE = 512;
+	static thread_local size_t m_thread_rand_idx = SMALL_BUFF_SIZE;
+	static thread_local char m_thread_rand_buffer[SMALL_BUFF_SIZE];
+
+	if (len < SMALL_BUFF_SIZE)
+	{
+		char *out_buf = reinterpret_cast<char*>(buf);
+		// small read optimized path
+		size_t len_remaining = SMALL_BUFF_SIZE - m_thread_rand_idx;
+		if (len_remaining >= len) {
+			memcpy(out_buf, &m_thread_rand_buffer[m_thread_rand_idx], len);
+			m_thread_rand_idx += len;
+		}
+		else
+		{
+			// Copy over with what we have left from our current buffer
+			memcpy(out_buf, &m_thread_rand_buffer[m_thread_rand_idx], len_remaining);
+
+			// grab new entropy from system
+			fill_secure_buffer_posix(m_thread_rand_buffer, SMALL_BUFF_SIZE);
+			memcpy(&out_buf[len_remaining], m_thread_rand_buffer, len - len_remaining);
+			m_thread_rand_idx = len - len_remaining;
+		}
+	}
+	else
+	{
+		fill_secure_buffer_posix(buf, len);
+	}
 }
 
 #endif
