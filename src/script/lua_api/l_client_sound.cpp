@@ -88,7 +88,7 @@ ClientSoundHandle *ClientSoundHandle::checkobject(lua_State *L, int narg)
 
 int ClientSoundHandle::gc_object(lua_State *L)
 {
-	ClientSoundHandle *o = *(ClientSoundHandle **)(lua_touserdata(L, 1));
+	ClientSoundHandle *o = takeObjectForGC<ClientSoundHandle>(L);
 	if (getClient(L) && getClient(L)->getSoundManager())
 		getClient(L)->getSoundManager()->freeId(o->m_handle);
 	delete o;

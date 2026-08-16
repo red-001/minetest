@@ -7,6 +7,7 @@
 #include "common/c_types.h"
 #include "common/helper.h"
 #include "config.h"
+#include "debug.h"
 #include "gamedef.h"
 
 extern "C" {
@@ -96,7 +97,21 @@ public:
 	template<typename T>
 	static inline T *checkObject(lua_State *L, int narg)
 	{
-		return *reinterpret_cast<T**>(luaL_checkudata(L, narg, T::className));
+		T *obj = *reinterpret_cast<T**>(luaL_checkudata(L, narg, T::className));
+		if (!obj)
+			luaL_error(L, "Object of type %s has been deleted already", T::className);
+		return obj;
+	}
+
+	template<typename T>
+	static inline T *takeObjectForGC(lua_State *L)
+	{
+		T **ud = reinterpret_cast<T **>(lua_touserdata(L, 1));
+		T *o = *ud;
+		*ud = nullptr;
+
+		FATAL_ERROR_IF(!o, "__gc called on object that was already destroyed!");
+		return o;
 	}
 
 	/**

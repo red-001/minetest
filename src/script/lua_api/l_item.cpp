@@ -16,7 +16,7 @@
 // garbage collector
 int LuaItemStack::gc_object(lua_State *L)
 {
-	LuaItemStack *o = *(LuaItemStack **)(lua_touserdata(L, 1));
+	LuaItemStack *o = takeObjectForGC<LuaItemStack>(L);
 	o->drop();
 	return 0;
 }
