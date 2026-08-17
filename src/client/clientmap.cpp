@@ -68,31 +68,6 @@ namespace {
 	};
 
 	// reference to a mesh buffer used when rendering the map.
-	struct DrawDescriptor {
-		v3f m_pos; // world translation
-		bool m_reuse_material:1;
-		bool m_use_partial_buffer:1;
-		union {
-			scene::IMeshBuffer *m_buffer;
-			const PartialMeshBuffer *m_partial_buffer;
-		};
-
-		DrawDescriptor(v3f pos, scene::IMeshBuffer *buffer, bool reuse_material = true) :
-			m_pos(pos), m_reuse_material(reuse_material), m_use_partial_buffer(false),
-			m_buffer(buffer)
-		{}
-
-		DrawDescriptor(v3f pos, const PartialMeshBuffer *buffer) :
-			m_pos(pos), m_reuse_material(false), m_use_partial_buffer(true),
-			m_partial_buffer(buffer)
-		{}
-
-		video::SMaterial &getMaterial();
-		/// @return number of vertices drawn
-		u32 draw(video::IVideoDriver* driver);
-	};
-
-	using DrawDescriptorList = std::vector<DrawDescriptor>;
 
 	/// @brief Append vertices to a mesh buffer
 	/// @note does not update bounding box!
@@ -978,7 +953,8 @@ static u32 transformBuffersToDrawOrder(
 	return can_merge < 2 ? 0 : can_merge;
 }
 
-void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
+void ClientMap::collectDrawOrder(video::IVideoDriver* driver, s32 pass,
+		DrawDescriptorList &draw_order)
 {
 	ZoneScoped;
 
@@ -1022,7 +998,6 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 	TimeTaker tt_collect("");
 
 	MeshBufListMaps &grouped_buffers = tl_meshbuflistmaps;
-	DrawDescriptorList &draw_order = tl_drawdescriptorlist;
 	grouped_buffers.clear();
 	draw_order.clear();
 
@@ -1087,6 +1062,42 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 
 	g_profiler->avg(prefix + "collecting [ms]", tt_collect.stop(true));
 
+	if (pass == scene::ESNRP_SOLID) {
+		g_profiler->avg("renderMap(): animated meshes [#]", mesh_animate_count);
+		g_profiler->avg(prefix + "merged buffers [#]", merged_count);
+
+		u32 cached_count = 0;
+		for (auto it = m_dynamic_buffers.begin(); it != m_dynamic_buffers.end(); ) {
+			// prune aggressively since every new/changed block or camera
+			// rotation can have big effects
+			if (++it->second.age > 1) {
+				it->second.drop();
+				it = m_dynamic_buffers.erase(it);
+			} else {
+				cached_count += it->second.buf.size();
+				it++;
+			}
+		}
+		g_profiler->avg(prefix + "merged buffers in cache [#]", cached_count);
+
+		buffer_transform_stats.commit(g_profiler);
+	}
+
+	if (pass == scene::ESNRP_TRANSPARENT) {
+		g_profiler->avg("renderMap(): transparent buffers [#]", draw_order.size());
+	}
+}
+
+void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
+{
+	ZoneScoped;
+
+	const std::string prefix = pass == scene::ESNRP_SOLID
+			? "renderMap(SOLID): " : "renderMap(TRANS): ";
+
+	DrawDescriptorList &draw_order = tl_drawdescriptorlist;
+	collectDrawOrder(driver, pass, draw_order);
+
 	TimeTaker tt_draw("");
 
 	core::matrix4 m; // Model matrix
@@ -1139,38 +1150,39 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 	}
 
 	g_profiler->avg(prefix + "draw meshes [ms]", tt_draw.stop(true));
-
-	if (pass == scene::ESNRP_SOLID) {
-		g_profiler->avg("renderMap(): animated meshes [#]", mesh_animate_count);
-		g_profiler->avg(prefix + "merged buffers [#]", merged_count);
-
-		u32 cached_count = 0;
-		for (auto it = m_dynamic_buffers.begin(); it != m_dynamic_buffers.end(); ) {
-			// prune aggressively since every new/changed block or camera
-			// rotation can have big effects
-			if (++it->second.age > 1) {
-				it->second.drop();
-				it = m_dynamic_buffers.erase(it);
-			} else {
-				cached_count += it->second.buf.size();
-				it++;
-			}
-		}
-		g_profiler->avg(prefix + "merged buffers in cache [#]", cached_count);
-
-		buffer_transform_stats.commit(g_profiler);
-	}
-
-	if (pass == scene::ESNRP_TRANSPARENT) {
-		g_profiler->avg("renderMap(): transparent buffers [#]", draw_order.size());
-	}
-
 	g_profiler->avg(prefix + "vertices drawn [#]", vertex_count);
 	g_profiler->avg(prefix + "drawcalls [#]", drawcall_count);
 	g_profiler->avg(prefix + "material swaps [#]", material_swaps);
 	if (material_swaps && array_texture_use) {
 		int percent = (100.0f * array_texture_use) / material_swaps;
 		g_profiler->avg(prefix + "array texture use [%]", percent);
+	}
+}
+
+void ClientMap::getWorldDrawCalls(video::IVideoDriver *driver, s32 pass,
+		std::vector<WorldMeshDrawCall> &out)
+{
+	DrawDescriptorList &draw_order = tl_drawdescriptorlist;
+	collectDrawOrder(driver, pass, draw_order);
+
+	out.clear();
+	out.reserve(draw_order.size());
+	for (auto &descriptor : draw_order) {
+		WorldMeshDrawCall call;
+		call.pos = descriptor.m_pos;
+		call.partial = descriptor.m_use_partial_buffer
+				? descriptor.m_partial_buffer : nullptr;
+		call.mesh = call.partial ? call.partial->getBuffer() : descriptor.m_buffer;
+
+		video::SMaterial material = call.mesh->getMaterial();
+		material.forEachTexture([this] (auto &tex) {
+			setMaterialFilters(tex, m_cache_bilinear_filter, m_cache_trilinear_filter,
+					m_cache_anistropic_filter);
+		});
+		material.Wireframe = m_control.show_wireframe;
+		call.material = material;
+
+		out.emplace_back(call);
 	}
 }
 

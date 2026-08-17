@@ -9,6 +9,66 @@
 #include <ISceneNode.h>
 #include <map>
 #include <functional>
+#include <vector>
+
+class Client;
+class RenderingEngine;
+
+enum CameraMode : int;
+
+namespace scene
+{
+	class IMeshBuffer;
+}
+
+namespace video
+{
+	class IVideoDriver;
+}
+
+class PartialMeshBuffer;
+
+/*
+	Reference to a mesh buffer used when rendering the map.
+*/
+struct DrawDescriptor
+{
+	v3f m_pos; // world translation
+	bool m_reuse_material : 1;
+	bool m_use_partial_buffer : 1;
+	union
+	{
+		scene::IMeshBuffer *m_buffer;
+		const PartialMeshBuffer *m_partial_buffer;
+	};
+
+	DrawDescriptor(v3f pos, scene::IMeshBuffer *buffer, bool reuse_material = true) :
+			m_pos(pos), m_reuse_material(reuse_material), m_use_partial_buffer(false),
+			m_buffer(buffer)
+	{}
+
+	DrawDescriptor(v3f pos, const PartialMeshBuffer *buffer) :
+			m_pos(pos), m_reuse_material(false), m_use_partial_buffer(true),
+			m_partial_buffer(buffer)
+	{}
+
+	video::SMaterial &getMaterial();
+	/// @return number of vertices drawn
+	u32 draw(video::IVideoDriver *driver);
+};
+
+using DrawDescriptorList = std::vector<DrawDescriptor>;
+
+/*
+	Backend-agnostic world draw call. Consumed by any rendering core.
+*/
+struct WorldMeshDrawCall
+{
+	v3f pos; // world translation
+	const scene::IMeshBuffer *mesh; // geometry
+	const PartialMeshBuffer *partial; // alternate indices, or nullptr
+	video::SMaterial material; // material copy
+};
 
 struct MapDrawControl
 {
@@ -26,16 +86,6 @@ class Client;
 class RenderingEngine;
 
 enum CameraMode : int;
-
-namespace scene
-{
-	class IMeshBuffer;
-}
-
-namespace video
-{
-	class IVideoDriver;
-}
 
 struct CachedMeshBuffer {
 	std::vector<scene::IMeshBuffer*> buf;
@@ -107,6 +157,11 @@ public:
 
 	void renderMap(video::IVideoDriver* driver, s32 pass);
 
+	/// @brief Collect the world draw calls for a pass, without drawing.
+	/// @param out receives the draw calls, in draw order.
+	void getWorldDrawCalls(video::IVideoDriver *driver, s32 pass,
+			std::vector<WorldMeshDrawCall> &out);
+
 	void renderMapShadows(video::IVideoDriver *driver,
 			ModifyMaterialCallback cb, s32 pass, int frame, int total_frames);
 
@@ -136,6 +191,10 @@ private:
 
 	// update the vertex order in transparent mesh buffers
 	void updateTransparentMeshBuffers();
+
+	/// @brief Collect the draw order for a pass.
+	void collectDrawOrder(video::IVideoDriver *driver, s32 pass,
+			DrawDescriptorList &draw_order);
 
 	// Orders blocks by distance to the camera
 	class MapBlockComparer
