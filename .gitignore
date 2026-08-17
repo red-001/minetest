@@ -100,6 +100,7 @@ doc/mkdocs/venv/
 ## Build files
 build/
 CMakeFiles
+_deps/
 Makefile
 cmake_install.cmake
 CMakeCache.txt

@@ -780,6 +780,14 @@ if(BUILD_CLIENT)
 	if(BUILD_WITH_TRACY)
 		target_link_libraries(${PROJECT_NAME} Tracy::TracyClient)
 	endif()
+	if(ENABLE_DILIGENT)
+		target_link_libraries(
+			${PROJECT_NAME}
+			Diligent-GraphicsEngineOpenGL-static
+			Diligent-BuildSettings
+			${CMAKE_DL_LIBS}
+		)
+	endif()
 
 	if(PRECOMPILE_HEADERS)
 		target_precompile_headers(${PROJECT_NAME} PRIVATE ${PRECOMPILED_HEADERS_LIST})

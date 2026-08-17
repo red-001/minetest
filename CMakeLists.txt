@@ -64,6 +64,11 @@ set(BUILD_WITH_TRACY FALSE CACHE BOOL
 set(FETCH_TRACY_GIT_TAG "master" CACHE STRING
 	"Git tag for fetching Tracy client. Match with your server (gui) version")
 
+set(ENABLE_DILIGENT FALSE CACHE BOOL
+	"Fetch and build with the DiligentEngine rendering backend")
+set(DILIGENT_SOURCE_DIR "" CACHE PATH
+	"Path to an existing DiligentCore checkout (optional)")
+
 set(DEFAULT_RUN_IN_PLACE FALSE)
 if(WIN32)
 	set(DEFAULT_RUN_IN_PLACE TRUE)
@@ -391,4 +396,46 @@ if(BUILD_WITH_TRACY)
 	)
 	FetchContent_MakeAvailable(tracy)
 	message(STATUS "Fetching Tracy - done")
+endif()
+
+# Fetch DiligentEngine
+if(ENABLE_DILIGENT)
+	if(NOT BUILD_CLIENT)
+		message(FATAL_ERROR "DiligentEngine backend requires BUILD_CLIENT")
+	endif()
+
+	include(FetchContent)
+
+	# cmake_minimum_required inside DiligentCore resets policies for that scope
+	set(CMAKE_POLICY_DEFAULT_CMP0177 NEW)
+	set(OpenGL_GL_PREFERENCE GLVND)
+
+	if(DILIGENT_SOURCE_DIR)
+		message(STATUS "Using existing DiligentCore at ${DILIGENT_SOURCE_DIR}")
+		FetchContent_Declare(DiligentCore
+			SOURCE_DIR ${DILIGENT_SOURCE_DIR}
+		)
+	else()
+		message(STATUS "Fetching DiligentCore...")
+		FetchContent_Declare(DiligentCore
+			GIT_REPOSITORY https://github.com/DiligentGraphics/DiligentCore.git
+			GIT_TAG v2.5.6
+			GIT_SHALLOW TRUE
+			GIT_PROGRESS TRUE
+			GIT_SUBMODULES ThirdParty/glew ThirdParty/xxHash
+		)
+	endif()
+
+	# Only the OpenGL backend is used; disable the rest
+	set(DILIGENT_BUILD_TESTS OFF CACHE BOOL "Build Diligent Engine tests" FORCE)
+	set(DILIGENT_NO_DIRECT3D11 ON CACHE BOOL "Disable Direct3D11 backend" FORCE)
+	set(DILIGENT_NO_DIRECT3D12 ON CACHE BOOL "Disable Direct3D12 backend" FORCE)
+	set(DILIGENT_NO_VULKAN ON CACHE BOOL "Disable Vulkan backend" FORCE)
+	set(DILIGENT_NO_METAL ON CACHE BOOL "Disable Metal backend" FORCE)
+	set(DILIGENT_NO_WEBGPU ON CACHE BOOL "Disable WebGPU backend" FORCE)
+	set(DILIGENT_NO_ARCHIVER ON CACHE BOOL "Do not build archiver" FORCE)
+	set(DILIGENT_NO_SUPER_RESOLUTION ON CACHE BOOL "Do not build super resolution" FORCE)
+	set(DILIGENT_NO_HLSL ON CACHE BOOL "Disable HLSL support" FORCE)
+	FetchContent_MakeAvailable(DiligentCore)
+	message(STATUS "Fetching DiligentCore - done")
 endif()
