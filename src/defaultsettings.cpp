@@ -247,6 +247,9 @@ void set_default_settings()
 	settings->setDefault("enable_fog", "true");
 	settings->setDefault("fog_start", "0.4");
 	settings->setDefault("3d_mode", "none");
+#ifdef ENABLE_DILIGENT
+	settings->setDefault("render_backend", "irrlicht");
+#endif
 	settings->setDefault("3d_paralax_strength", "0.025");
 	settings->setDefault("tooltip_show_delay", "400");
 	settings->setDefault("tooltip_append_itemname", "false");

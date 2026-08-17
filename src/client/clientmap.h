@@ -193,8 +193,9 @@ private:
 	void updateTransparentMeshBuffers();
 
 	/// @brief Collect the draw order for a pass.
+	/// @param merge_buffers if true, group and merge small buffers on the CPU.
 	void collectDrawOrder(video::IVideoDriver *driver, s32 pass,
-			DrawDescriptorList &draw_order);
+			DrawDescriptorList &draw_order, bool merge_buffers);
 
 	// Orders blocks by distance to the camera
 	class MapBlockComparer

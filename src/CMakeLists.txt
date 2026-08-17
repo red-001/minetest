@@ -727,6 +727,9 @@ if(BUILD_CLIENT)
 		"$<$<PLATFORM_ID:Android>:${SDL2_LIBRARIES}>"
 	)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE "MT_BUILDTARGET=1")
+	if(ENABLE_DILIGENT)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE "ENABLE_DILIGENT=1")
+	endif()
 	if(NOT USE_LUAJIT)
 		set_target_properties(${PROJECT_NAME} PROPERTIES
 			# This is necessary for dynamic Lua modules

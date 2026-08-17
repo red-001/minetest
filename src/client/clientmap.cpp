@@ -954,7 +954,7 @@ static u32 transformBuffersToDrawOrder(
 }
 
 void ClientMap::collectDrawOrder(video::IVideoDriver* driver, s32 pass,
-		DrawDescriptorList &draw_order)
+		DrawDescriptorList &draw_order, bool merge_buffers)
 {
 	ZoneScoped;
 
@@ -1046,9 +1046,18 @@ void ClientMap::collectDrawOrder(video::IVideoDriver* driver, s32 pass,
 			// the partial buffers in the correct order
 			for (auto &buffer : block_mesh->getTransparentBuffers())
 				draw_order.emplace_back(get_block_wpos(block_pos), &buffer);
-		} else {
-			// Otherwise, group them
+		} else if (merge_buffers) {
+			// Group them for merging
 			grouped_buffers.addFromBlock(block_pos, block_mesh, driver);
+		} else {
+			// Hand the raw buffers to the backend
+			for (u8 layer = 0; layer < MAX_TILE_LAYERS; layer++) {
+				scene::IMesh *mesh = block_mesh->getMesh(layer);
+				u32 c = mesh->getMeshBufferCount();
+				for (u32 i = 0; i < c; i++)
+					draw_order.emplace_back(get_block_wpos(block_pos),
+							mesh->getMeshBuffer(i));
+			}
 		}
 	}
 
@@ -1096,7 +1105,7 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 			? "renderMap(SOLID): " : "renderMap(TRANS): ";
 
 	DrawDescriptorList &draw_order = tl_drawdescriptorlist;
-	collectDrawOrder(driver, pass, draw_order);
+	collectDrawOrder(driver, pass, draw_order, true);
 
 	TimeTaker tt_draw("");
 
@@ -1163,7 +1172,7 @@ void ClientMap::getWorldDrawCalls(video::IVideoDriver *driver, s32 pass,
 		std::vector<WorldMeshDrawCall> &out)
 {
 	DrawDescriptorList &draw_order = tl_drawdescriptorlist;
-	collectDrawOrder(driver, pass, draw_order);
+	collectDrawOrder(driver, pass, draw_order, false);
 
 	out.clear();
 	out.reserve(draw_order.size());
