@@ -161,7 +161,7 @@ Functions that take or return paths always use virtual paths.
 
 * `assert`
 * `collectgarbage("count")`
-  * Other modes are unsupported and will do nothing and return nothing.
+  * Rounded, other modes are unsupported and will do nothing and return nothing.
 * `error`
 * `ipairs`
 * `next`
