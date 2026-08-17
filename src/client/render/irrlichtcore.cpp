@@ -3,23 +3,25 @@
 // Copyright (C) 2010-2013 celeron55, Perttu Ahola <celeron55@gmail.com>
 // Copyright (C) 2017 numzero, Lobachevskiy Vitaliy <numzer0@yandex.ru>
 
-#include "core.h"
+#include "irrlichtcore.h"
 
 #include "pipeline.h"
 #include "client/shadows/dynamicshadowsrender.h"
 
-RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud,
+IrrlichtRenderingCore::IrrlichtRenderingCore(IrrlichtDevice *_device,
+		Client *_client, Hud *_hud,
 		std::unique_ptr<ShadowRenderer> _shadow_renderer,
 		std::unique_ptr<RenderPipeline> _pipeline,
 		v2f _virtual_size_scale)
-	: device(_device), client(_client), hud(_hud), shadow_renderer(std::move(_shadow_renderer)),
+	: device(_device), client(_client), hud(_hud),
+	shadow_renderer(std::move(_shadow_renderer)),
 	pipeline(std::move(_pipeline)), virtual_size_scale(_virtual_size_scale)
 {
 }
 
-RenderingCore::~RenderingCore() = default;
+IrrlichtRenderingCore::~IrrlichtRenderingCore() = default;
 
-void RenderingCore::draw(video::SColor _skycolor, bool _show_hud,
+void IrrlichtRenderingCore::draw(video::SColor _skycolor, bool _show_hud,
 		bool _draw_wield_tool, bool _draw_crosshair)
 {
 	v2u32 screensize = device->getVideoDriver()->getScreenSize();
@@ -34,7 +36,7 @@ void RenderingCore::draw(video::SColor _skycolor, bool _show_hud,
 	pipeline->run(context);
 }
 
-v2u32 RenderingCore::getVirtualSize() const
+v2u32 IrrlichtRenderingCore::getVirtualSize() const
 {
 	return virtual_size;
 }
