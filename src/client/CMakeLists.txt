@@ -30,7 +30,7 @@ set(client_SRCS
 	${sound_SRCS}
 	${CMAKE_CURRENT_SOURCE_DIR}/meshgen/collector.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/render/anaglyph.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/render/irrlichtcore.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/render/core.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/render/factory.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/render/plain.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/render/sidebyside.cpp

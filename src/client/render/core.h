@@ -10,21 +10,41 @@
 #include <memory>
 
 class IrrlichtDevice;
+
 class ShadowRenderer;
 class Client;
 class Hud;
+class RenderPipeline;
 
-/// Abstract interface of a rendering core. Draws the game frame.
 class RenderingCore
 {
+protected:
+	IrrlichtDevice *device;
+	Client *client;
+	Hud *hud;
+	std::unique_ptr<ShadowRenderer> shadow_renderer;
+
+	std::unique_ptr<RenderPipeline> pipeline;
+
+	v2f virtual_size_scale;
+	v2u32 virtual_size { 0, 0 };
+
 public:
-	virtual ~RenderingCore() = default;
+	RenderingCore(IrrlichtDevice *device, Client *client, Hud *hud,
+			std::unique_ptr<ShadowRenderer> shadow_renderer,
+			std::unique_ptr<RenderPipeline> pipeline,
+			v2f virtual_size_scale);
+	RenderingCore(const RenderingCore &) = delete;
+	RenderingCore(RenderingCore &&) = delete;
+	virtual ~RenderingCore();
 
-	/// Draw one frame into the active window.
-	virtual void draw(video::SColor _skycolor, bool _show_hud,
-			bool _draw_wield_tool, bool _draw_crosshair) = 0;
+	RenderingCore &operator=(const RenderingCore &) = delete;
+	RenderingCore &operator=(RenderingCore &&) = delete;
 
-	virtual v2u32 getVirtualSize() const = 0;
+	void draw(video::SColor _skycolor, bool _show_hud,
+			bool _draw_wield_tool, bool _draw_crosshair);
 
-	virtual ShadowRenderer *get_shadow_renderer() { return nullptr; };
+	v2u32 getVirtualSize() const;
+
+	ShadowRenderer *get_shadow_renderer() { return shadow_renderer.get(); };
 };
