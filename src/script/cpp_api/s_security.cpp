@@ -1030,9 +1030,9 @@ int ScriptApiSecurity::sl_g_require(lua_State *L)
 int ScriptApiSecurity::sl_g_collectgarbage(lua_State *L)
 {
 	if (!lua_isnoneornil(L, 1) && readParam<std::string_view>(L, 1) == "count") {
-		const int hi = lua_gc(L, LUA_GCCOUNT,  0);
-		const int lo = lua_gc(L, LUA_GCCOUNTB, 0);
-		lua_pushnumber(L, hi + ((lua_Number)lo/1024));
+		const int kb = lua_gc(L, LUA_GCCOUNT, 0);
+		const int bytes = lua_gc(L, LUA_GCCOUNTB, 0);
+		lua_pushnumber(L, kb + ((lua_Number)bytes/1024));
 		return 1;
 	}
 	// do nothing instead of throwing so mods can more easily re-use code between server and client
