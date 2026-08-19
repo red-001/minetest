@@ -114,8 +114,6 @@ public:
 		T **ud = reinterpret_cast<T **>(lua_touserdata(L, 1));
 		T *o = *ud;
 		*ud = nullptr;
-
-		FATAL_ERROR_IF(!o, "__gc called on object that was already destroyed!");
 		return o;
 	}
 

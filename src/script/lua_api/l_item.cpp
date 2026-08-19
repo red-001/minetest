@@ -17,7 +17,8 @@
 int LuaItemStack::gc_object(lua_State *L)
 {
 	LuaItemStack *o = takeObjectForGC<LuaItemStack>(L);
-	o->drop();
+	if (o)
+		o->drop();
 	return 0;
 }
 
