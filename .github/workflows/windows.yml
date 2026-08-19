@@ -31,7 +31,7 @@ on:
       - 'misc/*'
       - '.github/workflows/windows.yml'
   schedule:
-    - cron: "17 13 * * *"
+    - cron: "53 13 * * *"
 
 jobs:
   mingw:
