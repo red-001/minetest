@@ -103,6 +103,11 @@ public:
 		return obj;
 	}
 
+	/*
+	 * Lua does not actually guarantee that an object entirely disappears after `__gc` is called,
+	 * so to avoid potential use-after-free we have to unset the pointer upon deleting.
+	 * This helper takes the pointer (unsetting it), and returns the old pointer.
+	 */
 	template<typename T>
 	static inline T *takeObjectForGC(lua_State *L)
 	{
