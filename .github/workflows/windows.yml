@@ -176,7 +176,6 @@ jobs:
           Get-ChildItem "$env:GITHUB_WORKSPACE\Package\*.zip" | Rename-Item -NewName { $_.Name -replace '\.zip$', '-msvc.zip' }
 
       - name: Save vcpkg cache
-        if: github.event_name != "schedule"
         uses: actions/cache/save@v6
         if: always() && steps.cmake.outcome == 'success' && steps.vcpkg-cache.outputs.cache-hit != 'true'
         with:
