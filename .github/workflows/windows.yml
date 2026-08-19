@@ -127,7 +127,7 @@ jobs:
           git -C vcpkg checkout $baseline
           .\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Restore vcpkg cache
+      - name: Restore vcpkg cache..
         id: vcpkg-cache
         uses: actions/cache/restore@v6
         with:
