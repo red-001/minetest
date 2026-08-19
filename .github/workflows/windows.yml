@@ -139,7 +139,6 @@ jobs:
           key: &vcpkg_cache_key ${{ runner.os }}-vcpkg-${{ matrix.config.vcpkg_triplet }}-${{ steps.setup-vcpkg.outputs.VCPKG_BASELINE }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             ${{ runner.os }}-vcpkg-${{ matrix.config.vcpkg_triplet }}-${{ steps.setup-vcpkg.outputs.VCPKG_BASELINE }}-
-            ${{ runner.os }}-vcpkg-${{ matrix.config.vcpkg_triplet }}-
 
       - name: CMake
         id: cmake
