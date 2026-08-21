@@ -43,6 +43,7 @@ setting to anything higher than `localhost`.
    in depth measure to make escapes harder.
  * Scripts should not know the heap or static address of objects, this is to
    make it more difficult to construct attacks based around fake objects.
+ * OS and IO libraries are not opened so their tables should not be in the Lua state.
  * No backup globals is retain, and we explicitly clear entries from old _G.
  * jit.* methods are not available so mods can't as easily tamper with LuaJIT
   * TODO: should LuaJIT be ran with the JIT engine disabled?

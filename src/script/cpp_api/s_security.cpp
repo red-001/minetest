@@ -24,9 +24,14 @@
 #include <iostream>
 #include <cinttypes>
 
+#include "lua_puclibs.h"
 
 #define SECURE_API(lib, name) \
 	lua_pushcfunction(L, sl_##lib##_##name); \
+	lua_setfield(L, -2, #name);
+
+#define PUC_API(prefix, name) \
+	lua_pushcfunction(L, luaE##prefix##_##name); \
 	lua_setfield(L, -2, #name);
 
 
@@ -174,7 +179,6 @@ void ScriptApiSecurity::initializeSecurity()
 	};
 	static const char *os_whitelist[] = {
 		"clock",
-		"date",
 		"difftime",
 		"getenv",
 		"time",
@@ -297,6 +301,8 @@ void ScriptApiSecurity::initializeSecurity()
 	SECURE_API(os, remove);
 	SECURE_API(os, rename);
 	SECURE_API(os, setlocale);
+	 // LuaJIT version doesn't valid format strings
+	PUC_API(os, date);
 
 	lua_setglobal(L, "os");
 	lua_pop(L, 1);  // Pop old OS
@@ -382,11 +388,6 @@ void ScriptApiSecurity::initializeSecurityClient()
 		"tracy",
 	};
 #endif
-	static const char *os_whitelist[] = {
-		"date",
-		"difftime",
-		"time"
-	};
 	static const char *debug_whitelist[] = {
 		"traceback"
 	};
@@ -394,7 +395,6 @@ void ScriptApiSecurity::initializeSecurityClient()
 		"byte",
 		"char",
 		"find",
-		"format",
 		"gmatch",
 		"gsub",
 		"len",
@@ -465,16 +465,13 @@ void ScriptApiSecurity::initializeSecurityClient()
 
 
 
-	// Copy safe OS functions
-	lua_getglobal(L, "os");
+	// load os functions
 	lua_newtable(L);
-	copy_safe(L, os_whitelist, sizeof(os_whitelist));
-
-	// And replace unsafe ones
+	PUC_API(os, date);
+	PUC_API(os, time);
+	PUC_API(os, difftime);
 	SECURE_API(os, clock);
-
-	lua_setfield(L, -3, "os");
-	lua_pop(L, 1);  // Pop old OS
+	lua_setfield(L, -2, "os");
 
 
 	// Copy safe debug functions
@@ -494,6 +491,11 @@ void ScriptApiSecurity::initializeSecurityClient()
 	lua_getglobal(L, "string");
 	lua_newtable(L);
 	copy_safe(L, string_whitelist, sizeof(string_whitelist));
+
+	// LuaJIT adds %p here
+	// so we use the PUC version instead
+	PUC_API(str, format);
+
 	lua_setfield(L, -3, "string");
 	lua_pop(L, 1);  // Pop old string
 
