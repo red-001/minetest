@@ -31,10 +31,8 @@ public:
 	void initializeSecurity();
 #if CHECK_CLIENT_BUILD()
 	void initializeSecurityClient();
-	void initializeSecuritySSCSM();
 #else
 	void initializeSecurityClient() { assert(0); }
-	void initializeSecuritySSCSM() { assert(0); }
 #endif
 
 	// Checks if the Lua state has been secured
