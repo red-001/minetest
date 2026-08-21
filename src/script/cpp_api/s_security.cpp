@@ -509,6 +509,10 @@ void ScriptApiSecurity::initializeSecurityClient()
 	}
 #endif
 
+	// clear old globals
+	// if the globals leak somehow
+	// this mitigates that
+	clearGlobals(L);
 	// Set the environment to the one we created earlier
 	setLuaEnv(L, thread);
 
@@ -533,6 +537,26 @@ void ScriptApiSecurity::createEmptyEnv(lua_State *L)
 	lua_newtable(L);  // Create new environment
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "_G");  // Create the _G loop
+}
+
+void ScriptApiSecurity::clearGlobals(lua_State *L)
+{
+	// get global table
+	// and clear any metaindex on it
+	lua_pushliteral(L, "_G");
+	lua_rawget(L, LUA_GLOBALSINDEX);
+	lua_newtable(L);
+	lua_setmetatable(L, -2);
+
+	lua_pushnil(L);
+	while (lua_next(L, -2) != 0) {
+		lua_pop(L, 1); // don't care about the value
+		lua_pushvalue(L, -1);
+		lua_pushnil(L);
+		lua_rawset(L, -4); // clear value
+	}
+	// global table should be completely empty now
+	lua_pop(L, 1);
 }
 
 void ScriptApiSecurity::setLuaEnv(lua_State *L, int thread)

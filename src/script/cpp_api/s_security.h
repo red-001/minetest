@@ -100,6 +100,8 @@ private:
 	static void createEmptyEnv(lua_State *L);
 	// replace "default files" (io.input/io.output) with /dev/null
 	static void replaceDefaultFiles(lua_State *L);
+	// delete all globals
+	void clearGlobals(lua_State *L);
 
 	bool m_secure = false;
 
