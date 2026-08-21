@@ -356,7 +356,6 @@ void ScriptApiSecurity::initializeSecurityClient()
 		"next",
 		"pairs",
 		"pcall",
-		"print",
 		"rawequal",
 		"rawget",
 		"rawset",
@@ -372,143 +371,23 @@ void ScriptApiSecurity::initializeSecurityClient()
 		"xpcall",
 		// Completely safe libraries
 		"coroutine",
-		"string",
 		"table",
 		"math",
 		"bit",
+	};
+#if BUILD_WITH_TRACY
+	static const char *whitelist_cscsm_only[] = {
 		// Not sure if completely safe. But if someone enables tracy, they'll
 		// know what they do.
-#if BUILD_WITH_TRACY
 		"tracy",
-#endif
 	};
+#endif
 	static const char *os_whitelist[] = {
-		"clock",
 		"date",
 		"difftime",
 		"time"
 	};
 	static const char *debug_whitelist[] = {
-		"traceback"
-	};
-
-#if USE_LUAJIT
-	static const char *jit_whitelist[] = {
-		"arch",
-		"flush",
-		"off",
-		"on",
-		"opt",
-		"os",
-		"status",
-		"version",
-		"version_num",
-	};
-#endif
-
-	m_secure = true;
-
-	lua_State *L = getStack();
-	const int thread = getThread(L);
-
-	// Back up selected globals to the registry (needed for push_original)
-	lua_newtable(L);
-	for (const char *name : {"debug"}) {
-		lua_getglobal(L, name);
-		lua_setfield(L, -2, name);
-	}
-	lua_rawseti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_GLOBALS_BACKUP);
-
-	// create an empty environment
-	createEmptyEnv(L);
-
-	// Copy safe base functions
-	lua_getglobal(L, "_G");
-	lua_getfield(L, -2, "_G");
-	copy_safe(L, whitelist, sizeof(whitelist));
-
-	// And replace unsafe ones
-	SECURE_API(g, dofile);
-	SECURE_API(g, load);
-	SECURE_API(g, loadfile);
-	SECURE_API(g, loadstring);
-	SECURE_API(g, require);
-	SECURE_API(g, collectgarbage);
-	lua_pop(L, 2);
-
-
-
-	// Copy safe OS functions
-	lua_getglobal(L, "os");
-	lua_newtable(L);
-	copy_safe(L, os_whitelist, sizeof(os_whitelist));
-	lua_setfield(L, -3, "os");
-	lua_pop(L, 1);  // Pop old OS
-
-
-	// Copy safe debug functions
-	lua_getglobal(L, "debug");
-	lua_newtable(L);
-	copy_safe(L, debug_whitelist, sizeof(debug_whitelist));
-
-	// And replace unsafe ones
-	SECURE_API(debug, getinfo); // (used by builtin and unset before mods load)
-
-	lua_setfield(L, -3, "debug");
-	lua_pop(L, 1);  // Pop old debug
-
-
-#if USE_LUAJIT
-	// Copy safe jit functions, if they exist
-	lua_getglobal(L, "jit");
-	lua_newtable(L);
-	copy_safe(L, jit_whitelist, sizeof(jit_whitelist));
-	lua_setfield(L, -3, "jit");
-	lua_pop(L, 1);  // Pop old jit
-#endif
-
-	// Set the environment to the one we created earlier
-	setLuaEnv(L, thread);
-
-	replace_string_metatable(L);
-}
-
-void ScriptApiSecurity::initializeSecuritySSCSM()
-{
-	static const char *whitelist[] = {
-		"assert",
-		"core",
-		"DIR_DELIM",
-		"error",
-		"ipairs",
-		"next",
-		"pairs",
-		"pcall",
-		"rawequal",
-		"rawget",
-		"rawset",
-		"select",
-		"setfenv",
-		"getmetatable",
-		"setmetatable",
-		"tonumber",
-		"tostring",
-		"type",
-		"unpack",
-		"_VERSION",
-		"xpcall",
-		// Completely safe libraries
-		"coroutine",
-		"table",
-		"math",
-		"bit",
-	};
-	static const char *os_whitelist[] = {
-		"difftime",
-		"time"
-	};
-	static const char *debug_whitelist[] = {
-		"getinfo", // used by client builtin and unset before mods load
 		"traceback"
 	};
 	static const char *string_whitelist[] = { // all but string.dump
@@ -543,7 +422,23 @@ void ScriptApiSecurity::initializeSecuritySSCSM()
 	m_secure = true;
 
 	lua_State *L = getStack();
-	int thread = getThread(L);
+	const int thread = getThread(L);
+
+	// Back up debug.getinfo
+	{
+		lua_newtable(L);
+		lua_newtable(L); // copy of debug
+
+		// copy debug.getinfo
+		lua_getglobal(L, "debug");
+		lua_getfield(L, -1, "getinfo");
+		lua_setfield(L, -3, "getinfo");
+		lua_pop(L, 1);
+
+		lua_setfield(L, -2, "debug");
+		lua_rawseti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_GLOBALS_BACKUP);
+	}
+
 
 	// create an empty environment
 	createEmptyEnv(L);
@@ -552,7 +447,10 @@ void ScriptApiSecurity::initializeSecuritySSCSM()
 	lua_getglobal(L, "_G");
 	lua_getfield(L, -2, "_G");
 	copy_safe(L, whitelist, sizeof(whitelist));
-
+#if BUILD_WITH_TRACY
+	if (getType() == ScriptingType::Client)
+		copy_safe(L, whitelist_cscsm_only, sizeof(whitelist_cscsm_only));
+#endif
 	// And replace unsafe ones
 	SECURE_API(g, dofile);
 	SECURE_API(g, load);
@@ -580,6 +478,11 @@ void ScriptApiSecurity::initializeSecuritySSCSM()
 	lua_getglobal(L, "debug");
 	lua_newtable(L);
 	copy_safe(L, debug_whitelist, sizeof(debug_whitelist));
+
+	// (used by builtin and unset before mods load)
+	// And replace unsafe ones
+	SECURE_API(debug, getinfo);
+
 	lua_setfield(L, -3, "debug");
 	lua_pop(L, 1);  // Pop old debug
 
@@ -593,12 +496,17 @@ void ScriptApiSecurity::initializeSecuritySSCSM()
 
 
 #if USE_LUAJIT
-	// Copy safe jit functions, if they exist
-	lua_getglobal(L, "jit");
-	lua_newtable(L);
-	copy_safe(L, jit_whitelist, sizeof(jit_whitelist));
-	lua_setfield(L, -3, "jit");
-	lua_pop(L, 1);  // Pop old jit
+	// client scripts can have JIT
+	// but server supplied code is not allowed
+	// to inspect or modify jit compiler state
+	if (getType() == ScriptingType::Client) {
+		// Copy safe jit functions, if they exist
+		lua_getglobal(L, "jit");
+		lua_newtable(L);
+		copy_safe(L, jit_whitelist, sizeof(jit_whitelist));
+		lua_setfield(L, -3, "jit");
+		lua_pop(L, 1);  // Pop old jit
+	}
 #endif
 
 	// Set the environment to the one we created earlier
