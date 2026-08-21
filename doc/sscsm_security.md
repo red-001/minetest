@@ -35,12 +35,14 @@ setting to anything higher than `localhost`.
 ## Lua sandbox
 
 * We execute only Lua scripts, in a Lua sandbox.
-* See also `initializeSecuritySSCSM()`.
-* We do not trust the Lua implementation to not have bugs. => Additional process
-  isolation layer as fallback.
+* See also `initializeSecurityClient()`.
+ * We do not trust the Lua implementation to not have bugs. => Additional process
+   isolation layer as fallback.
  * Scripts cannot control GC (Garbage Collector), since this is a common primitive
    used in Lua sandbox escapes in order to get a desired heap layout, this a defense
    in depth measure to make escapes harder.
+ * jit.* methods are not available so mods can't as easily tamper with LuaJIT
+  * TODO: should LuaJIT be ran with the JIT engine disabled?
 
 ## Process isolation
 
