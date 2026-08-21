@@ -16,11 +16,13 @@
 #include "content/mods.h" // ModSpec
 #include "settings.h"
 #include "constants.h"
+#include "porting.h"
 
 #include <cerrno>
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <cinttypes>
 
 
 #define SECURE_API(lib, name) \
@@ -203,6 +205,8 @@ void ScriptApiSecurity::initializeSecurity()
 	};
 
 	m_secure = true;
+	// not critical on server
+	std::ignore = porting::secure_rand_fill_buf(m_pointer_key, sizeof(m_pointer_key));
 
 	lua_State *L = getStack();
 	const int sanity_check_top = lua_gettop(L);
@@ -361,7 +365,6 @@ void ScriptApiSecurity::initializeSecurityClient()
 		"getmetatable",
 		"setmetatable",
 		"tonumber",
-		"tostring",
 		"type",
 		"unpack",
 		"_VERSION",
@@ -417,6 +420,8 @@ void ScriptApiSecurity::initializeSecurityClient()
 #endif
 
 	m_secure = true;
+	if (!porting::secure_rand_fill_buf(m_pointer_key, sizeof(m_pointer_key)))
+		throw LuaError("Unable to setup pointer key");
 
 	lua_State *L = getStack();
 	const int thread = getThread(L);
@@ -455,6 +460,7 @@ void ScriptApiSecurity::initializeSecurityClient()
 	SECURE_API(g, loadstring);
 	SECURE_API(g, require);
 	SECURE_API(g, collectgarbage);
+	SECURE_API(g, tostring);
 	lua_pop(L, 2);
 
 
@@ -879,6 +885,63 @@ bool ScriptApiSecurity::checkPathWithGamedef(lua_State *L,
 
 #undef RETURN_WRITE_ALLOWED
 
+// TODO; replace these when switching to C++20
+static inline uint32_t SPECK_rotl(uint32_t v, int shift)
+{
+	return (v << shift) | (v >> (sizeof(v)*8 - shift));
+}
+
+static inline uint32_t SPECK_rotr(uint32_t v, int shift)
+{
+	return (v >> shift) | (v << (sizeof(v)*8 - shift));
+}
+
+static void SPECK_round(const uint32_t key, uint32_t &x, uint32_t &y)
+{
+	constexpr int a = 8;
+	constexpr int b = 3;
+
+	x = (SPECK_rotr(x, a) + y) ^ key;
+	y = SPECK_rotl(y, b) ^ x;
+}
+
+// uses SPECK as a light weight scrambling primitive
+// https://eprint.iacr.org/2013/404.pdf
+uint64_t ScriptApiSecurity::scramblePointer(unsigned char type, const void *ptr) const
+{
+	// round count: 27
+	// key size: 4*32 = 128
+	// SPECK 64/128
+
+	// we discard the upper byte of the pointer and use this for type
+	// upper byte isn't meaningful on any target platforms
+	// this hides from the sandbox if two objects of different types
+	// end up getting the same address
+	const uint64_t input = static_cast<uint64_t>(reinterpret_cast<size_t>(ptr));
+	const auto &key = m_pointer_key;
+
+	uint32_t x = (static_cast<uint32_t>(input >> 32) << 8) | type;
+	uint32_t y = static_cast<uint32_t>(input & ~uint32_t(0));
+
+	uint32_t b = key[0];
+	uint32_t a[3] = {key[1], key[2], key[3]};
+
+	for (int i = 0; i < 27; i++) {
+		SPECK_round(b, x, y);
+		SPECK_round(i, a[i%3], b);
+	}
+
+	return (uint64_t(x) << 32) | y;
+}
+
+uint64_t ScriptApiSecurity::toScrambledPointer(lua_State *L, int index)
+{
+	const void *ptr = lua_topointer(L, index);
+	unsigned char type = static_cast<unsigned char>(lua_type(L, index));
+	const auto *sec = ModApiBase::getScriptApi<ScriptApiSecurity>(L);
+	return sec->scramblePointer(type, ptr);
+}
+
 int ScriptApiSecurity::sl_g_dofile(lua_State *L)
 {
 	int nret = sl_g_loadfile(L);
@@ -1015,6 +1078,35 @@ int ScriptApiSecurity::sl_g_collectgarbage(lua_State *L)
 	}
 	// do nothing instead of throwing so mods can more easily re-use code between server and client
 	return 0;
+}
+
+// copied from bundled Lua
+int ScriptApiSecurity::sl_g_tostring(lua_State *L)
+{
+	luaL_checkany(L, 1);
+	if (luaL_callmeta(L, 1, "__tostring"))  // is there a metafield?
+		return 1;  // use its value
+	switch (lua_type(L, 1)) {
+	case LUA_TNUMBER:
+		lua_pushstring(L, lua_tostring(L, 1));
+		break;
+	case LUA_TSTRING:
+		lua_pushvalue(L, 1);
+		break;
+	case LUA_TBOOLEAN:
+		lua_pushstring(L, (lua_toboolean(L, 1) ? "true" : "false"));
+		break;
+	case LUA_TNIL:
+		lua_pushliteral(L, "nil");
+		break;
+	default:
+		// mod security, avoid leaking the raw object pointer here
+		char buf[0x200];
+		snprintf(buf, sizeof(buf), "%s: 0x%016" PRIx64, luaL_typename(L, 1), toScrambledPointer(L, 1));
+		lua_pushstring(L, buf);
+		break;
+	}
+	return 1;
 }
 
 
