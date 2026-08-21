@@ -41,6 +41,8 @@ setting to anything higher than `localhost`.
  * Scripts cannot control GC (Garbage Collector), since this is a common primitive
    used in Lua sandbox escapes in order to get a desired heap layout, this a defense
    in depth measure to make escapes harder.
+ * Scripts should not know the heap or static address of objects, this is to
+   make it more difficult to construct attacks based around fake objects.
  * No backup globals is retain, and we explicitly clear entries from old _G.
  * jit.* methods are not available so mods can't as easily tamper with LuaJIT
   * TODO: should LuaJIT be ran with the JIT engine disabled?
