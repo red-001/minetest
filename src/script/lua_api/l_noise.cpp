@@ -601,7 +601,7 @@ int LuaSecureRandom::l_next_bytes(lua_State *L)
 
 int LuaSecureRandom::create_object(lua_State *L)
 {
-	// used to have internal state at one point, no longer does
+	// empty, for backwards compat
 	lua_newuserdata(L, 0);
 	luaL_getmetatable(L, className);
 	lua_setmetatable(L, -2);
@@ -610,12 +610,12 @@ int LuaSecureRandom::create_object(lua_State *L)
 
 void LuaSecureRandom::Register(lua_State *L)
 {
-	static const luaL_Reg metamethods[] = {
-		{0, 0}
-	};
-	registerClass<LuaSecureRandom>(L, methods, metamethods);
+	luaL_newmetatable(L, className);
+	luaL_register(L, NULL, methods);
 
 	lua_register(L, className, create_object);
+
+	lua_pop(L, 2);
 }
 
 const char LuaSecureRandom::className[] = "SecureRandom";
