@@ -368,12 +368,23 @@ endif()
 include(CheckSymbolExists)
 check_symbol_exists(strlcpy "string.h" HAVE_STRLCPY)
 
-include(CheckCXXSourceCompiles)
-check_cxx_source_compiles("#include <sys/random.h>
+set(GETGENTROPY_TEST_CODE "#include <sys/random.h>
 int main() {
-	unsigned char buffer[1];
-	return getentropy(buffer, sizeof(buffer)) != 0;
-}" HAVE_GETENTROPY)
+        unsigned char buffer[256];
+        return getentropy(buffer, sizeof(buffer));
+}")
+
+# If we are cross-compiling just check
+# if it would compile correctly
+# there's a fallback at runtime to /dev/urandom anyway
+# but if we are not cross compiling actually test it
+if(CMAKE_CROSSCOMPILING AND NOT WIN32)
+	include(CheckCXXSourceCompiles)
+	check_cxx_source_compile(${GETGENTROPY_TEST_CODE} HAVE_GETENTROP)
+elseif(NOT WIN32)
+	include(CheckCXXSourceRuns)
+	check_cxx_source_runs(${GETGENTROPY_TEST_CODE} HAVE_GETENTROP)
+endif()
 
 if(UNIX)
 	check_symbol_exists(malloc_trim "malloc.h" HAVE_MALLOC_TRIM)

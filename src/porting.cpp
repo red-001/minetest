@@ -58,7 +58,6 @@
 
 #if HAVE_GETENTROPY
 	#include <sys/random.h>
-	#define USE_GETENTROPY 1
 #endif
 
 #include "debug.h"
@@ -814,7 +813,7 @@ void secure_rand_fill_buf(void *buf, size_t len)
 
 static void fill_secure_buffer_posix(char *buf, size_t len)
 {
-#if USE_GETENTROPY
+#if HAVE_GETENTROPY
 	// https://man7.org/linux/man-pages/man3/getentropy.3.html
 	// https://man7.org/linux/man-pages/man2/getrandom.2.html
 	// https://linux.die.net/man/4/urandom
