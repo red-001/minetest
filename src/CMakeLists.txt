@@ -380,10 +380,10 @@ int main() {
 # but if we are not cross compiling actually test it
 if(CMAKE_CROSSCOMPILING AND NOT WIN32)
 	include(CheckCXXSourceCompiles)
-	check_cxx_source_compile(${GETGENTROPY_TEST_CODE} HAVE_GETENTROP)
+	check_cxx_source_compiles("${GETGENTROPY_TEST_CODE}" HAVE_GETENTROPY)
 elseif(NOT WIN32)
 	include(CheckCXXSourceRuns)
-	check_cxx_source_runs(${GETGENTROPY_TEST_CODE} HAVE_GETENTROP)
+	check_cxx_source_runs("${GETGENTROPY_TEST_CODE}" HAVE_GETENTROPY)
 endif()
 
 if(UNIX)
