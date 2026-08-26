@@ -370,12 +370,10 @@ check_symbol_exists(strlcpy "string.h" HAVE_STRLCPY)
 
 # getentropy() is specified by POSIX in <unistd.h>,
 # some systems also provide it in <sys/random.h>.
-set(HAVE_GETENTROPY FALSE)
-if(NOT WIN32)
-	check_symbol_exists(getentropy "unistd.h;sys/random.h" FOUND_GETENTROPY)
-	if(FOUND_GETENTROPY)
-		set(HAVE_GETENTROPY TRUE)
-	endif()
+if(WIN32)
+	set(HAVE_GETENTROPY FALSE)
+else()
+	check_symbol_exists(getentropy "unistd.h;sys/random.h" HAVE_GETENTROPY)
 endif()
 # Apple requires either reading from /dev/urandom
 # or using some Swift API on non MacOS systems
