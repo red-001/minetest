@@ -181,11 +181,10 @@ void TestConnection::testConnectSendReceive()
 	}
 
 	infostream << "** Creating server Connection" << std::endl;
-	con::Connection server(512, 5.0f, false, &hand_server);
-	server.Serve(address);
+	con::Connection server(512, 5.0f, UDPSocket(address), true, &hand_server);
 
 	infostream << "** Creating client Connection" << std::endl;
-	con::Connection client(512, 5.0f, false, &hand_client);
+	con::Connection client(512, 5.0f, UDPSocket(address.isIPv6()), false, &hand_client);
 
 	UASSERT(hand_server.count == 0);
 	UASSERT(hand_client.count == 0);

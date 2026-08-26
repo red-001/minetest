@@ -5,8 +5,7 @@
 #pragma once
 
 #include "irrlichttypes.h"
-
-class Address;
+#include "address.h"
 
 void sockets_init();
 void sockets_cleanup();
@@ -15,11 +14,41 @@ class UDPSocket
 {
 public:
 	UDPSocket() = default;
-	UDPSocket(bool ipv6); // calls init()
-	~UDPSocket();
+	UDPSocket(bool ipv6)
+	{
+		init(ipv6, false);
+	}
+	UDPSocket(Address addr)
+	{
+		init(addr.isIPv6(), false);
+		Bind(addr);
+	}
+	UDPSocket(UDPSocket &&other):
+		m_handle(other.m_handle),
+		m_timeout_ms(other.m_timeout_ms),
+		m_addr_family(other.m_addr_family)
+	{
+		other.m_handle = -1;
+	}
+	~UDPSocket()
+	{
+		Close();
+	}
+	UDPSocket &operator=(UDPSocket &&other)
+	{
+		Close();
+		m_handle = other.m_handle;
+		m_timeout_ms = other.m_timeout_ms;
+		m_addr_family = other.m_addr_family;
+		other.m_handle = -1;
+		return *this;
+	}
 	bool init(bool ipv6, bool noExceptions = false);
 
 	void Bind(Address addr);
+	void Close();
+
+	Address GetBindAddress();
 
 	void Send(const Address &destination, const void *data, int size);
 	// Returns -1 if there is no data

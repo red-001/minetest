@@ -7,7 +7,6 @@
 #include <iostream>
 #include <cstring>
 #include "util/numeric.h"
-#include "address.h"
 #include "constants.h"
 #include "log.h"
 #include "networkexceptions.h"
@@ -60,11 +59,6 @@ void sockets_cleanup()
 	UDPSocket
 */
 
-UDPSocket::UDPSocket(bool ipv6)
-{
-	init(ipv6, false);
-}
-
 bool UDPSocket::init(bool ipv6, bool noExceptions)
 {
 	if (!g_sockets_initialized) {
@@ -98,7 +92,7 @@ bool UDPSocket::init(bool ipv6, bool noExceptions)
 	return true;
 }
 
-UDPSocket::~UDPSocket()
+void UDPSocket::Close()
 {
 	if (m_handle >= 0) {
 #ifdef _WIN32
@@ -107,6 +101,7 @@ UDPSocket::~UDPSocket()
 		close(m_handle);
 #endif
 	}
+	m_handle = -1;
 }
 
 void UDPSocket::Bind(Address addr)
@@ -160,6 +155,31 @@ void UDPSocket::Bind(Address addr)
 		tracestream << (int)m_handle << ": Bind failed: "
 			<< SOCKET_ERR_STR(LAST_SOCKET_ERR()) << std::endl;
 		throw SocketException("Failed to bind socket");
+	}
+}
+
+Address UDPSocket::GetBindAddress()
+{
+	struct sockaddr_storage addr;
+	socklen_t addr_len = sizeof(addr);
+	assert(m_handle >= 0);
+
+	if (getsockname(m_handle, (struct sockaddr*)&addr, &addr_len) != 0)
+		throw SocketException(std::string("Failed to get socket port: ") +  SOCKET_ERR_STR(LAST_SOCKET_ERR()));
+
+	if (addr.ss_family == AF_INET6) {
+		 auto *addr_v6 = reinterpret_cast<struct sockaddr_in6*>(&addr);
+		u16 port = ntohs(addr_v6->sin6_port);
+		IPv6AddressBytes bytes;
+		memcpy(bytes.bytes, addr_v6->sin6_addr.s6_addr, sizeof(bytes.bytes));
+
+		return Address(&bytes, port);
+	} else {
+		struct sockaddr_in *addr_v4 = (struct sockaddr_in *)&addr;
+		u32 ip4 = ntohl(addr_v4->sin_addr.s_addr);
+		u16 port = ntohs(addr_v4->sin_port);
+
+		return Address(ip4, port);
 	}
 }
 

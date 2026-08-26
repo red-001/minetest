@@ -447,7 +447,6 @@ void ConnectionSendThread::processReliableCommand(ConnectionCommandPtr &c)
 			return;
 		}
 
-		case CONNCMD_SERVE:
 		case CONNCMD_CONNECT:
 		case CONNCMD_DISCONNECT:
 		case CONCMD_ACK:
@@ -468,12 +467,6 @@ void ConnectionSendThread::processNonReliableCommand(ConnectionCommandPtr &c_ptr
 		case CONNCMD_NONE:
 			LOG(dout_con << m_connection->getDesc()
 				<< " UDP processing CONNCMD_NONE" << std::endl);
-			return;
-		case CONNCMD_SERVE:
-			LOG(dout_con << m_connection->getDesc()
-				<< " UDP processing CONNCMD_SERVE port="
-				<< c.address.serializeString() << std::endl);
-			serve(c.address);
 			return;
 		case CONNCMD_CONNECT:
 			LOG(dout_con << m_connection->getDesc()
@@ -516,20 +509,6 @@ void ConnectionSendThread::processNonReliableCommand(ConnectionCommandPtr &c_ptr
 		default:
 			LOG(dout_con << m_connection->getDesc()
 				<< " Invalid command type: " << c.type << std::endl);
-	}
-}
-
-void ConnectionSendThread::serve(Address bind_address)
-{
-	LOG(dout_con << m_connection->getDesc()
-		<< "UDP serving at port " << bind_address.serializeString() << std::endl);
-	try {
-		m_connection->m_udpSocket.Bind(bind_address);
-		m_connection->SetPeerID(PEER_ID_SERVER);
-	}
-	catch (SocketException &e) {
-		// Create event
-		m_connection->putEvent(ConnectionEvent::bindFailed());
 	}
 }
 
