@@ -4,6 +4,7 @@
 
 #include "cpp_api/s_security.h"
 #include "lua_api/l_base.h"
+#include "common/c_converter.h"
 #include "filesys.h"
 #include "util/hashing.h"
 #include "util/hex.h"
@@ -23,7 +24,6 @@
 #include <algorithm>
 #include <iostream>
 #include <cinttypes>
-
 
 #define SECURE_API(lib, name) \
 	lua_pushcfunction(L, sl_##lib##_##name); \
@@ -174,7 +174,6 @@ void ScriptApiSecurity::initializeSecurity()
 	};
 	static const char *os_whitelist[] = {
 		"clock",
-		"date",
 		"difftime",
 		"getenv",
 		"time",
@@ -297,6 +296,9 @@ void ScriptApiSecurity::initializeSecurity()
 	SECURE_API(os, remove);
 	SECURE_API(os, rename);
 	SECURE_API(os, setlocale);
+	// LuaJIT version doesn't valid format strings
+	// neither does Lua 5.1 (only fixed in 5.2)
+	SECURE_API(os, date);
 
 	lua_setglobal(L, "os");
 	lua_pop(L, 1);  // Pop old OS
@@ -386,7 +388,6 @@ void ScriptApiSecurity::initializeSecurityClient()
 	};
 #endif
 	static const char *os_whitelist[] = {
-		"date",
 		"difftime",
 		"time"
 	};
@@ -467,18 +468,17 @@ void ScriptApiSecurity::initializeSecurityClient()
 	lua_pop(L, 2);
 
 
-
 	// Copy safe OS functions
 	lua_getglobal(L, "os");
 	lua_newtable(L);
 	copy_safe(L, os_whitelist, sizeof(os_whitelist));
 
 	// And replace unsafe ones
+	SECURE_API(os, date);
 	SECURE_API(os, clock);
 
 	lua_setfield(L, -3, "os");
 	lua_pop(L, 1);  // Pop old OS
-
 
 	// Copy safe debug functions
 	lua_getglobal(L, "debug");
@@ -497,6 +497,8 @@ void ScriptApiSecurity::initializeSecurityClient()
 	lua_getglobal(L, "string");
 	lua_newtable(L);
 	copy_safe(L, string_whitelist, sizeof(string_whitelist));
+
+
 	lua_setfield(L, -3, "string");
 	lua_pop(L, 1);  // Pop old string
 
@@ -1193,6 +1195,66 @@ int ScriptApiSecurity::sl_io_lines(lua_State *L)
 	return lua_gettop(L) - top_precall;
 }
 
+
+/* For reference see Lua 5.1 and 5.2 os_date
+ * reimplemented to avoid UB from invalid format specifiers
+   https://www.lua.org/source/5.2/loslib.c.html#checkoption */
+int ScriptApiSecurity::sl_os_date(lua_State *L)
+{
+	// allow-list of valid strftime cross platform specifiers
+	// copied from Lua 5.2
+	constexpr std::string_view k_strf_time_options = "aAbBcdHIjmMpSUwWxXyYz%";
+	std::string_view fmt = readParam<std::string_view>(L, 1, "%c");
+	const time_t t = static_cast<time_t>(luaL_optnumber(L, 2, time(NULL)));
+	struct tm *stm = nullptr;
+
+	// todo: should SSCSM always return UTC time?
+	if (fmt.size() >= 1 && fmt[0] == '!') {
+		stm = gmtime(&t); // UTC
+		fmt.remove_prefix(1);
+	} else {
+		stm = localtime(&t); // local
+	}
+	// invalid date?
+	if (!stm) {
+		lua_pushnil(L);
+		return 1;
+	}
+	if (fmt == "*t") {
+		lua_createtable(L, 0, 9);  /* 9 = number of fields */
+		setintfield(L, -1, "sec", stm->tm_sec);
+		setintfield(L, -1, "min", stm->tm_min);
+		setintfield(L, -1, "hour", stm->tm_hour);
+		setintfield(L, -1, "day", stm->tm_mday);
+		setintfield(L, -1, "month", stm->tm_mon+1);
+		setintfield(L, -1, "year", stm->tm_year+1900);
+		setintfield(L, -1, "wday", stm->tm_wday+1);
+		setintfield(L, -1, "yday", stm->tm_yday+1);
+		setboolfield(L,-1, "isdst", stm->tm_isdst);
+	} else {
+		luaL_Buffer b;
+		luaL_buffinit(L, &b);
+		while (!fmt.empty()) {
+			const char elem = fmt[0];
+			fmt.remove_prefix(1);
+			// is regular character?
+			if (elem != '%' || fmt.empty()) {
+				luaL_addchar(&b, elem);
+				continue;
+			}
+			const char specifier = fmt[0];
+			fmt.remove_prefix(1);
+			if (k_strf_time_options.find_first_of(specifier) == k_strf_time_options.npos)
+				luaL_argerror(L, 1,
+						lua_pushfstring(L, "invalid conversion specifier '%%%c'", specifier));
+			const char subfmt[] = {'%', specifier, '\0' };
+			char buff[0x200] = {};
+			luaL_addlstring(&b, buff, strftime(buff, sizeof(buff), subfmt, stm));
+		}
+		luaL_pushresult(&b);
+	}
+	return 1;
+}
 
 int ScriptApiSecurity::sl_os_rename(lua_State *L)
 {
