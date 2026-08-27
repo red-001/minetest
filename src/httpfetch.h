@@ -77,6 +77,9 @@ struct HTTPFetchRequest
 	// If true, don't print to errorstream when result is not OK.
 	bool quiet = false;
 
+	// If true, disable TLS certificate verfication
+	bool skip_cert_check = false;
+
 	HTTPFetchRequest();
 };
 

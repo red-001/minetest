@@ -12690,6 +12690,12 @@ Used by `HTTPApiTable.fetch` and `HTTPApiTable.fetch_async`.
     -- Optional, if true then error messages are suppressed on failure.
     -- Default is false.
 
+    skip_certificate_check = boolean,
+    -- **Dangerous**, if true TLS certificates will not be verfied for this request.
+    -- Only set this if you expect an invalid/self-signed/expired certificate.
+    -- HTTPS traffic may be intercepted or modifed with this setting configured.
+    -- Default is false.
+
     post_data = "Raw POST request data string" OR {field1 = "data1", field2 = "data2"},
     -- Deprecated, use `data` instead. Forces `method = "POST"`.
 }

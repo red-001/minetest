@@ -74,6 +74,7 @@ void ModApiHttp::read_http_fetch_request(lua_State *L, HTTPFetchRequest &req)
 	lua_pop(L, 1);
 
 	req.quiet = getboolfield_default(L, 1, "quiet", false);
+	req.skip_cert_check = getboolfield_default(L, 1, "skip_certificate_check", false);
 }
 
 void ModApiHttp::push_http_fetch_result(lua_State *L, HTTPFetchResult &res, bool completed)

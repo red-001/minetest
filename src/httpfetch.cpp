@@ -375,8 +375,8 @@ HTTPFetchOngoing::HTTPFetchOngoing(const HTTPFetchRequest &request_,
 	}
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_header);
 
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER,
-		g_settings->getBool("curl_verify_cert") ? 1L : 0L);
+	const bool tls_verify = g_settings->getBool("curl_verify_cert") && !request.skip_cert_check;
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, tls_verify ? 1L : 0L);
 }
 
 CURLcode HTTPFetchOngoing::start(CURLM *multi_)
