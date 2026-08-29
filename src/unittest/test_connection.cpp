@@ -181,10 +181,12 @@ void TestConnection::testConnectSendReceive()
 	}
 
 	infostream << "** Creating server Connection" << std::endl;
-	con::Connection server(512, 5.0f, UDPSocket(address), true, &hand_server);
+	UDPSocket server_socket = UDPSocket::Create(address);
+	con::Connection server(512, 5.0f, std::move(server_socket), true, &hand_server);
 
 	infostream << "** Creating client Connection" << std::endl;
-	con::Connection client(512, 5.0f, UDPSocket(address.isIPv6()), false, &hand_client);
+	UDPSocket client_socket = UDPSocket::CreateEphemeral(address.isIPv6());
+	con::Connection client(512, 5.0f, std::move(client_socket), false, &hand_client);
 
 	UASSERT(hand_server.count == 0);
 	UASSERT(hand_client.count == 0);

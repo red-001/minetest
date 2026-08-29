@@ -59,19 +59,14 @@ void sockets_cleanup()
 	UDPSocket
 */
 
-bool UDPSocket::init(bool ipv6, bool noExceptions)
+void UDPSocket::Init(bool ipv6)
 {
 	if (!g_sockets_initialized) {
-		verbosestream << "Sockets not initialized" << std::endl;
-		return false;
+		throw SocketException("Sockets not initialized");
 	}
 
 	if (m_handle >= 0) {
-		auto msg = "Cannot initialize socket twice";
-		verbosestream << msg << std::endl;
-		if (noExceptions)
-			return false;
-		throw SocketException(msg);
+		throw SocketException("Cannot initialize socket twice");
 	}
 
 	// Use IPv6 if specified
@@ -82,14 +77,10 @@ bool UDPSocket::init(bool ipv6, bool noExceptions)
 		auto msg = std::string("Failed to create socket: ") +
 			SOCKET_ERR_STR(LAST_SOCKET_ERR());
 		verbosestream << msg << std::endl;
-		if (noExceptions)
-			return false;
 		throw SocketException(msg);
 	}
 
 	setTimeoutMs(0);
-
-	return true;
 }
 
 void UDPSocket::Close()
@@ -106,6 +97,8 @@ void UDPSocket::Close()
 
 void UDPSocket::Bind(Address addr)
 {
+	if (m_handle == -1)
+		Init(addr.isIPv6());
 	if (addr.getFamily() != m_addr_family) {
 		const char *errmsg =
 				"Socket and bind address families do not match";
@@ -158,7 +151,7 @@ void UDPSocket::Bind(Address addr)
 	}
 }
 
-Address UDPSocket::GetBindAddress()
+Address UDPSocket::GetLocalAddress()
 {
 	struct sockaddr_storage addr;
 	socklen_t addr_len = sizeof(addr);

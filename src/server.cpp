@@ -286,7 +286,7 @@ Server::Server(
 		ChatInterface *iface,
 		std::string *shutdown_errmsg
 	):
-	m_bind_addr(socket.GetBindAddress()),
+	m_bind_addr(socket.GetLocalAddress()),
 	m_path_world(path_world),
 	m_gamespec(gamespec),
 	m_simple_singleplayer_mode(simple_singleplayer_mode),

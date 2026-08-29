@@ -523,14 +523,6 @@ void ConnectionSendThread::connect(Address address)
 	// Create event
 	m_connection->putEvent(ConnectionEvent::peerAdded(peer->id, peer->address));
 
-	Address bind_addr;
-	if (address.isIPv6())
-		bind_addr.setAddress(static_cast<IPv6AddressBytes*>(nullptr));
-	else
-		bind_addr.setAddress(static_cast<u32>(0));
-
-	m_connection->m_udpSocket.Bind(bind_addr);
-
 	// Send a dummy packet to server with peer_id = PEER_ID_INEXISTENT
 	m_connection->SetPeerID(PEER_ID_INEXISTENT);
 	NetworkPacket pkt(0, 0);

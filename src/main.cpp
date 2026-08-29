@@ -1213,7 +1213,7 @@ static bool run_dedicated_server(const GameParams &game_params, const Settings &
 
 		try {
 			Server server(game_params.world_path, game_params.game_spec,
-					false, UDPSocket(bind_addr), true, &iface);
+					false, UDPSocket::Create(bind_addr), true, &iface);
 
 			g_term_console.setup(&iface, &kill, admin_nick);
 
@@ -1251,7 +1251,7 @@ static bool run_dedicated_server(const GameParams &game_params, const Settings &
 		try {
 			// Create server
 			Server server(game_params.world_path, game_params.game_spec, false,
-					UDPSocket(bind_addr), true);
+					UDPSocket::Create(bind_addr), true);
 			server.start();
 
 			// Run server
@@ -1352,7 +1352,8 @@ static bool recompress_map_database(const GameParams &game_params, const Setting
 		return false;
 	}
 	const std::string &backend = world_mt.get("backend");
-	Server server(game_params.world_path, game_params.game_spec, false, UDPSocket(Address(u32(0), 0)), false);
+	Server server(game_params.world_path, game_params.game_spec, false,
+			UDPSocket::CreateEphemeral(false), false);
 	MapDatabase *db = ServerMap::createDatabase(backend, game_params.world_path, world_mt);
 
 	u32 count = 0;

@@ -14,15 +14,6 @@ class UDPSocket
 {
 public:
 	UDPSocket() = default;
-	UDPSocket(bool ipv6)
-	{
-		init(ipv6, false);
-	}
-	UDPSocket(Address addr)
-	{
-		init(addr.isIPv6(), false);
-		Bind(addr);
-	}
 	UDPSocket(UDPSocket &&other):
 		m_handle(other.m_handle),
 		m_timeout_ms(other.m_timeout_ms),
@@ -43,12 +34,27 @@ public:
 		other.m_handle = -1;
 		return *this;
 	}
-	bool init(bool ipv6, bool noExceptions = false);
 
+	static UDPSocket Create(Address addr)
+	{
+		UDPSocket socket;
+		socket.Bind(addr);
+		return socket;
+	}
+
+	static UDPSocket CreateEphemeral(bool ipv6)
+	{
+		if (ipv6)
+			return Create(Address(nullptr, 0));
+		else
+			return Create(Address(u32(0), 0));
+	}
+
+	void Init(bool ipv6);
 	void Bind(Address addr);
 	void Close();
 
-	Address GetBindAddress();
+	Address GetLocalAddress();
 
 	void Send(const Address &destination, const void *data, int size);
 	// Returns -1 if there is no data

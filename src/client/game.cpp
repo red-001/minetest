@@ -769,9 +769,9 @@ bool Game::createServer(GameStartData &start_data)
 		return false;
 	}
 
-	UDPSocket server_socket(bind_addr);
+	UDPSocket server_socket = UDPSocket::Create(bind_addr);
 	// in singleplayer mode the OS assigns us the port in bind
-	start_data.socket_port = server_socket.GetBindAddress().getPort();
+	start_data.socket_port = server_socket.GetLocalAddress().getPort();
 
 	server = new Server(start_data.world_spec.path, start_data.game_spec,
 		simple_singleplayer_mode, std::move(server_socket),
